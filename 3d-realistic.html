@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rocket League 3D - Realista</title>
+  <title>Car Soccer 3D</title>
   <style>
     * {
       margin: 0;
@@ -15,11 +15,11 @@
       width: 100vw;
       height: 100vh;
       background: #0a0e27;
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
       overflow: hidden;
     }
 
-    #canvas {
+    canvas {
       display: block;
       width: 100%;
       height: 100%;
@@ -32,66 +32,74 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
-      font-size: 20px;
       color: white;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
       padding: 20px;
+      font-family: Arial, sans-serif;
     }
 
     .score-container {
       position: absolute;
-      top: 30px;
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 60px;
+      gap: 40px;
       font-size: 48px;
       font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 3px;
     }
 
-    .score {
+    .score-box {
       text-align: center;
-      min-width: 120px;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 10px 30px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px 25px;
       border-radius: 10px;
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      min-width: 80px;
     }
 
-    .score.blue { color: #5aa7ff; }
-    .score.orange { color: #ff5a5a; }
+    .score-box.orange { color: #ff5a5a; }
+    .score-box.blue { color: #5aa7ff; }
 
     .timer {
       position: absolute;
-      top: 30px;
+      top: 20px;
       right: 30px;
-      font-size: 32px;
+      font-size: 36px;
       font-weight: bold;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.6);
       padding: 10px 20px;
+      border-radius: 10px;
+    }
+
+    .mode-display {
+      position: absolute;
+      top: 100px;
+      left: 30px;
+      font-size: 16px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 15px;
       border-radius: 8px;
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      max-width: 300px;
+      line-height: 1.6;
     }
 
     .boost-meter {
       position: absolute;
-      bottom: 30px;
+      bottom: 80px;
       left: 30px;
       width: 250px;
     }
 
-    .meter-label {
-      font-size: 14px;
-      margin-bottom: 8px;
+    .boost-label {
+      font-size: 12px;
+      margin-bottom: 5px;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
     }
 
     .meter-bar {
       width: 100%;
-      height: 20px;
+      height: 18px;
       background: rgba(0, 0, 0, 0.6);
       border: 2px solid rgba(255, 255, 255, 0.3);
       border-radius: 4px;
@@ -102,565 +110,365 @@
       height: 100%;
       background: linear-gradient(90deg, #00d4ff, #0099ff);
       width: 100%;
-      transition: width 0.1s ease;
     }
 
-    .speedometer {
+    .controls {
       position: absolute;
-      bottom: 30px;
-      right: 30px;
-      width: 200px;
-      text-align: center;
+      bottom: 20px;
+      left: 30px;
+      font-size: 13px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 300px;
+      line-height: 1.8;
     }
 
-    .speed-value {
-      font-size: 32px;
+    .speed-display {
+      position: absolute;
+      bottom: 80px;
+      right: 30px;
+      font-size: 28px;
       font-weight: bold;
       color: #5aa7ff;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px 20px;
+      border-radius: 8px;
+      min-width: 120px;
+      text-align: center;
     }
 
     .speed-label {
       font-size: 12px;
       color: #aaa;
-      margin-top: 5px;
     }
 
-    #menu {
+    .menu-overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(5, 10, 25, 0.95);
+      background: rgba(0, 0, 0, 0.8);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
-      backdrop-filter: blur(5px);
+      z-index: 999;
     }
 
-    #menu.hidden {
+    .menu-overlay.hidden {
       display: none;
     }
 
-    .menu-card {
-      text-align: center;
-      background: rgba(20, 40, 70, 0.8);
-      border: 2px solid rgba(90, 167, 255, 0.6);
+    .pause-menu {
+      background: rgba(20, 40, 70, 0.95);
+      border: 3px solid rgba(90, 167, 255, 0.8);
       border-radius: 15px;
-      padding: 50px;
+      padding: 40px;
+      text-align: center;
       max-width: 500px;
     }
 
-    .menu-card h1 {
-      font-size: 52px;
-      margin-bottom: 20px;
+    .pause-menu h2 {
+      font-size: 36px;
       color: #5aa7ff;
-      text-transform: uppercase;
-      letter-spacing: 4px;
-      text-shadow: 0 0 20px rgba(90, 167, 255, 0.5);
+      margin-bottom: 20px;
     }
 
-    .menu-card p {
-      font-size: 16px;
+    .pause-menu p {
       color: #ddd;
-      margin-bottom: 10px;
-      line-height: 1.6;
-    }
-
-    .button-group {
-      display: flex;
-      gap: 15px;
-      margin-top: 30px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .menu-btn {
-      pointer-events: auto;
-      padding: 15px 35px;
       font-size: 16px;
-      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .pause-menu button {
+      background: linear-gradient(135deg, #5aa7ff, #7ac0ff);
+      color: white;
       border: none;
+      padding: 12px 30px;
+      font-size: 16px;
       border-radius: 8px;
       cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 2px;
+      margin: 10px;
+      font-weight: bold;
       transition: all 0.3s ease;
     }
 
-    .btn-play-bot {
-      background: linear-gradient(135deg, #ff5a5a, #ff7a7a);
-      color: white;
-    }
-
-    .btn-play-2p {
-      background: linear-gradient(135deg, #5aa7ff, #7ac0ff);
-      color: white;
-    }
-
-    .menu-btn:hover {
+    .pause-menu button:hover {
       transform: scale(1.05);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    .game-mode {
-      font-size: 18px;
-      color: #5aa7ff;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    .controls-info {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 12px;
-      text-align: center;
-      color: #aaa;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 10px 20px;
-      border-radius: 8px;
-      max-width: 600px;
     }
   </style>
 </head>
 <body>
-  <canvas id="canvas"></canvas>
+  <canvas id="game"></canvas>
 
   <div id="hud">
     <div class="score-container">
-      <div class="score orange">
-        <div id="scoreOrange">0</div>
-      </div>
-      <div class="score blue">
-        <div id="scoreBlue">0</div>
-      </div>
+      <div class="score-box orange" id="scoreOrange">0</div>
+      <div class="score-box blue" id="scoreBlue">0</div>
     </div>
 
     <div class="timer" id="timer">5:00</div>
 
+    <div class="mode-display" id="modeDisplay">
+      <strong>MODO: PRÁCTICA</strong><br>
+      Presiona: 1=Práctica | 2=2 Jugadores | 3=vs IA | 4=Entreno
+    </div>
+
     <div class="boost-meter">
-      <div class="meter-label" id="boostLabel">BOOST</div>
+      <div class="boost-label">BOOST</div>
       <div class="meter-bar">
-        <div class="meter-fill" id="boostFill"></div>
+        <div class="meter-fill" id="boostBar"></div>
       </div>
     </div>
 
-    <div class="speedometer">
-      <div class="speed-value" id="speedValue">0</div>
+    <div class="controls">
+      <strong>CONTROLES:</strong><br>
+      W/A/S/D = Mover<br>
+      ESPACIO = Boost<br>
+      R = Reiniciar
+    </div>
+
+    <div class="speed-display">
+      <div id="speedValue">0</div>
       <div class="speed-label">KM/H</div>
     </div>
-
-    <div class="controls-info">
-      <div id="controlsText"></div>
-    </div>
   </div>
 
-  <div id="menu">
-    <div class="menu-card">
-      <h1>⚽ Rocket League</h1>
-      <p>Física 3D ultra realista</p>
-      <p>Controla tu coche, golpea la pelota y marca goles</p>
-      <div class="button-group">
-        <button class="menu-btn btn-play-bot" id="btnBot">Jugar vs Bot</button>
-        <button class="menu-btn btn-play-2p" id="btn2Player">2 Jugadores Local</button>
-      </div>
-      <div class="game-mode" id="gameModeDisplay"></div>
+  <div id="pauseMenu" class="menu-overlay hidden">
+    <div class="pause-menu">
+      <h2 id="pauseTitle">PAUSADO</h2>
+      <p id="pauseScore"></p>
+      <button onclick="resumeGame()">Continuar</button>
+      <button onclick="changeMode(0)">Práctica</button>
+      <button onclick="changeMode(1)">2 Jugadores</button>
+      <button onclick="changeMode(2)">vs IA</button>
     </div>
   </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"></script>
 
   <script>
-    // =========================
-    // CONFIGURACIÓN GENERAL
-    // =========================
-    const canvas = document.getElementById('canvas');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFShadowShadowMap;
-    renderer.setClearColor(0x0a0e27);
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    // Físicas
-    const world = new CANNON.World();
-    world.gravity.set(0, -9.82, 0);
-    world.defaultContactMaterial.friction = 0.4;
-    world.defaultContactMaterial.restitution = 0.8;
-
-    // HUD
-    const menu = document.getElementById('menu');
     const scoreOrangeEl = document.getElementById('scoreOrange');
     const scoreBlueEl = document.getElementById('scoreBlue');
     const timerEl = document.getElementById('timer');
-    const boostFillEl = document.getElementById('boostFill');
+    const boostBarEl = document.getElementById('boostBar');
     const speedValueEl = document.getElementById('speedValue');
-    const gameModeDisplay = document.getElementById('gameModeDisplay');
-    const controlsText = document.getElementById('controlsText');
+    const modeDisplay = document.getElementById('modeDisplay');
+    const pauseMenu = document.getElementById('pauseMenu');
+    const pauseTitle = document.getElementById('pauseTitle');
+    const pauseScore = document.getElementById('pauseScore');
 
     let gameState = {
-      isRunning: false,
-      gameMode: null,
+      isRunning: true,
+      isPaused: false,
+      gameMode: 0, // 0=práctica, 1=2players, 2=vs IA, 3=entreno
       scoreOrange: 0,
       scoreBlue: 0,
-      timeRemaining: 300,
-      activePlayer: 0
+      timeRemaining: 300
     };
 
-    // Input
     const keys = {};
 
-    // =========================
-    // ILUMINACIÓN
-    // =========================
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
+    // =====================
+    // VECTOR 3D
+    // =====================
+    class Vector3 {
+      constructor(x = 0, y = 0, z = 0) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+      }
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(100, 150, 100);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    directionalLight.shadow.camera.left = -300;
-    directionalLight.shadow.camera.right = 300;
-    directionalLight.shadow.camera.top = 300;
-    directionalLight.shadow.camera.bottom = -300;
-    directionalLight.shadow.camera.near = 0.5;
-    directionalLight.shadow.camera.far = 500;
-    scene.add(directionalLight);
+      add(v) {
+        return new Vector3(this.x + v.x, this.y + v.y, this.z + v.z);
+      }
 
-    const skyLight = new THREE.HemisphereLight(0x87ceeb, 0x1a1a2e, 0.8);
-    scene.add(skyLight);
+      scale(s) {
+        return new Vector3(this.x * s, this.y * s, this.z * s);
+      }
 
-    // =========================
-    // ESTADIO
-    // =========================
-    const FIELD_LENGTH = 200;
-    const FIELD_WIDTH = 100;
-    const FIELD_HEIGHT = 80;
-    const WALL_HEIGHT = 120;
+      length() {
+        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+      }
 
-    function createField() {
-      // Grass field
-      const fieldGeom = new THREE.PlaneGeometry(FIELD_WIDTH, FIELD_LENGTH);
-      const fieldMat = new THREE.MeshStandardMaterial({
-        color: 0x1ca45a,
-        roughness: 0.8,
-        metalness: 0.1
-      });
-      const field = new THREE.Mesh(fieldGeom, fieldMat);
-      field.rotation.x = -Math.PI / 2;
-      field.receiveShadow = true;
-      scene.add(field);
+      normalize() {
+        const len = this.length();
+        if (len === 0) return new Vector3(0, 0, 0);
+        return new Vector3(this.x / len, this.y / len, this.z / len);
+      }
 
-      // Física del suelo
-      const groundShape = new CANNON.Plane();
-      const groundBody = new CANNON.Body({ mass: 0 });
-      groundBody.addShape(groundShape);
-      groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-      world.addBody(groundBody);
-
-      // Paredes laterales
-      const wallMat = new THREE.MeshStandardMaterial({
-        color: 0x1a4d33,
-        roughness: 0.6
-      });
-
-      // Pared izquierda
-      const leftWall = new THREE.BoxGeometry(20, WALL_HEIGHT, FIELD_LENGTH);
-      const leftWallMesh = new THREE.Mesh(leftWall, wallMat);
-      leftWallMesh.position.x = -FIELD_WIDTH / 2 - 10;
-      leftWallMesh.position.y = WALL_HEIGHT / 2;
-      leftWallMesh.castShadow = true;
-      leftWallMesh.receiveShadow = true;
-      scene.add(leftWallMesh);
-
-      const leftWallShape = new CANNON.Box(new CANNON.Vec3(10, WALL_HEIGHT / 2, FIELD_LENGTH / 2));
-      const leftWallBody = new CANNON.Body({ mass: 0 });
-      leftWallBody.addShape(leftWallShape);
-      leftWallBody.position.x = -FIELD_WIDTH / 2 - 10;
-      leftWallBody.position.y = WALL_HEIGHT / 2;
-      world.addBody(leftWallBody);
-
-      // Pared derecha
-      const rightWall = new THREE.BoxGeometry(20, WALL_HEIGHT, FIELD_LENGTH);
-      const rightWallMesh = new THREE.Mesh(rightWall, wallMat);
-      rightWallMesh.position.x = FIELD_WIDTH / 2 + 10;
-      rightWallMesh.position.y = WALL_HEIGHT / 2;
-      rightWallMesh.castShadow = true;
-      rightWallMesh.receiveShadow = true;
-      scene.add(rightWallMesh);
-
-      const rightWallShape = new CANNON.Box(new CANNON.Vec3(10, WALL_HEIGHT / 2, FIELD_LENGTH / 2));
-      const rightWallBody = new CANNON.Body({ mass: 0 });
-      rightWallBody.addShape(rightWallShape);
-      rightWallBody.position.x = FIELD_WIDTH / 2 + 10;
-      rightWallBody.position.y = WALL_HEIGHT / 2;
-      world.addBody(rightWallBody);
-
-      // Pared frontal
-      const frontWall = new THREE.BoxGeometry(FIELD_WIDTH, WALL_HEIGHT, 20);
-      const frontWallMesh = new THREE.Mesh(frontWall, wallMat);
-      frontWallMesh.position.z = -FIELD_LENGTH / 2 - 10;
-      frontWallMesh.position.y = WALL_HEIGHT / 2;
-      frontWallMesh.castShadow = true;
-      frontWallMesh.receiveShadow = true;
-      scene.add(frontWallMesh);
-
-      const frontWallShape = new CANNON.Box(new CANNON.Vec3(FIELD_WIDTH / 2, WALL_HEIGHT / 2, 10));
-      const frontWallBody = new CANNON.Body({ mass: 0 });
-      frontWallBody.addShape(frontWallShape);
-      frontWallBody.position.z = -FIELD_LENGTH / 2 - 10;
-      frontWallBody.position.y = WALL_HEIGHT / 2;
-      world.addBody(frontWallBody);
-
-      // Pared trasera
-      const backWall = new THREE.BoxGeometry(FIELD_WIDTH, WALL_HEIGHT, 20);
-      const backWallMesh = new THREE.Mesh(backWall, wallMat);
-      backWallMesh.position.z = FIELD_LENGTH / 2 + 10;
-      backWallMesh.position.y = WALL_HEIGHT / 2;
-      backWallMesh.castShadow = true;
-      backWallMesh.receiveShadow = true;
-      scene.add(backWallMesh);
-
-      const backWallShape = new CANNON.Box(new CANNON.Vec3(FIELD_WIDTH / 2, WALL_HEIGHT / 2, 10));
-      const backWallBody = new CANNON.Body({ mass: 0 });
-      backWallBody.addShape(backWallShape);
-      backWallBody.position.z = FIELD_LENGTH / 2 + 10;
-      backWallBody.position.y = WALL_HEIGHT / 2;
-      world.addBody(backWallBody);
-
-      // Techo del estadio
-      const roofGeom = new THREE.BoxGeometry(FIELD_WIDTH + 100, 30, FIELD_LENGTH + 100);
-      const roofMat = new THREE.MeshStandardMaterial({
-        color: 0x0a0e27,
-        metalness: 0.3,
-        roughness: 0.8
-      });
-      const roof = new THREE.Mesh(roofGeom, roofMat);
-      roof.position.y = WALL_HEIGHT + 15;
-      roof.castShadow = true;
-      scene.add(roof);
+      copy() {
+        return new Vector3(this.x, this.y, this.z);
+      }
     }
 
-    createField();
-
-    // =========================
+    // =====================
     // PELOTA
-    // =========================
+    // =====================
     class Ball {
       constructor() {
-        this.radius = 3.6;
-        
-        const ballGeom = new THREE.SphereGeometry(this.radius, 32, 32);
-        const ballMat = new THREE.MeshStandardMaterial({
-          color: 0xf5f5f5,
-          roughness: 0.4,
-          metalness: 0.6,
-          emissive: 0xffffff,
-          emissiveIntensity: 0.1
-        });
-        this.mesh = new THREE.Mesh(ballGeom, ballMat);
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
-        scene.add(this.mesh);
-
-        const ballShape = new CANNON.Sphere(this.radius);
-        this.body = new CANNON.Body({
-          mass: 0.414,
-          shape: ballShape,
-          linearDamping: 0.01,
-          angularDamping: 0.01
-        });
-        this.body.position.set(0, 10, 0);
-        world.addBody(this.body);
+        this.pos = new Vector3(0, 40, 0);
+        this.vel = new Vector3(0, 0, 0);
+        this.radius = 8;
       }
 
       update() {
-        this.mesh.position.copy(this.body.position);
-        this.mesh.quaternion.copy(this.body.quaternion);
+        this.vel.y -= 0.3;
+        this.vel.x *= 0.995;
+        this.vel.y *= 0.995;
+        this.vel.z *= 0.995;
 
-        if (this.body.position.y < 5) {
-          this.body.velocity.x *= 0.98;
-          this.body.velocity.z *= 0.98;
+        this.pos.x += this.vel.x;
+        this.pos.y += this.vel.y;
+        this.pos.z += this.vel.z;
+
+        if (this.pos.y < this.radius) {
+          this.pos.y = this.radius;
+          this.vel.y *= -0.75;
+          this.vel.x *= 0.92;
+          this.vel.z *= 0.92;
         }
+
+        if (this.pos.x < -240) this.pos.x = -240;
+        if (this.pos.x > 240) this.pos.x = 240;
+        if (this.pos.z < -300) this.pos.z = -300;
+        if (this.pos.z > 300) this.pos.z = 300;
       }
 
       reset() {
-        this.body.position.set(0, 10, 0);
-        this.body.velocity.set(0, 0, 0);
-        this.body.angularVelocity.set(0, 0, 0);
+        this.pos = new Vector3(0, 40, 0);
+        this.vel = new Vector3(0, 0, 0);
+      }
+
+      draw(ctx, screenX, screenY) {
+        ctx.fillStyle = '#f5f5f5';
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
       }
     }
 
-    const ball = new Ball();
-
-    // =========================
+    // =====================
     // COCHE
-    // =========================
+    // =====================
     class Car {
       constructor(x, z, color) {
-        this.isAI = false;
+        this.pos = new Vector3(x, 10, z);
+        this.vel = new Vector3(0, 0, 0);
+        this.angle = 0;
         this.color = color;
+        this.width = 12;
+        this.length = 20;
+        this.height = 8;
         this.speed = 0;
-        this.maxSpeed = 60;
+        this.maxSpeed = 35;
         this.boost = 100;
         this.maxBoost = 100;
-        this.boostRechargeRate = 10;
-        this.accelerationAmount = 0;
-        this.turnAmount = 0;
+      }
 
-        this.width = 3.8;
-        this.length = 7.6;
-        this.height = 3.2;
+      update() {
+        this.vel.y -= 0.3;
+        this.vel.x *= 0.94;
+        this.vel.z *= 0.94;
 
-        const carGeom = new THREE.BoxGeometry(this.width, this.height, this.length);
-        const carMat = new THREE.MeshStandardMaterial({
-          color: color,
-          roughness: 0.4,
-          metalness: 0.7
-        });
-        this.mesh = new THREE.Mesh(carGeom, carMat);
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
-        scene.add(this.mesh);
-
-        const carShape = new CANNON.Box(
-          new CANNON.Vec3(this.width / 2, this.height / 2, this.length / 2)
-        );
-        this.body = new CANNON.Body({
-          mass: 1200,
-          shape: carShape,
-          linearDamping: 0.3,
-          angularDamping: 0.5
-        });
-        this.body.position.set(x, this.height / 2 + 2, z);
-        world.addBody(this.body);
-
-        // Ruedas
-        this.wheels = [];
-        const wheelPositions = [
-          [-this.width / 2 + 0.5, -this.height / 2, -this.length / 3],
-          [this.width / 2 - 0.5, -this.height / 2, -this.length / 3],
-          [-this.width / 2 + 0.5, -this.height / 2, this.length / 3],
-          [this.width / 2 - 0.5, -this.height / 2, this.length / 3]
-        ];
-
-        for (let pos of wheelPositions) {
-          const wheelGeom = new THREE.CylinderGeometry(1, 1, 0.8, 16);
-          const wheelMat = new THREE.MeshStandardMaterial({
-            color: 0x1a1a1a,
-            roughness: 0.8,
-            metalness: 0.1
-          });
-          const wheel = new THREE.Mesh(wheelGeom, wheelMat);
-          wheel.rotation.z = Math.PI / 2;
-          wheel.position.set(pos[0], pos[1], pos[2]);
-          wheel.castShadow = true;
-          this.mesh.add(wheel);
-          this.wheels.push(wheel);
+        const speed = Math.sqrt(this.vel.x * this.vel.x + this.vel.z * this.vel.z);
+        if (speed > this.maxSpeed) {
+          const scale = this.maxSpeed / speed;
+          this.vel.x *= scale;
+          this.vel.z *= scale;
         }
+
+        this.pos.x += this.vel.x;
+        this.pos.y += this.vel.y;
+        this.pos.z += this.vel.z;
+
+        if (this.pos.y < this.height / 2) {
+          this.pos.y = this.height / 2;
+          this.vel.y = 0;
+        }
+
+        if (this.pos.x < -220) this.pos.x = -220;
+        if (this.pos.x > 220) this.pos.x = 220;
+        if (this.pos.z < -280) this.pos.z = -280;
+        if (this.pos.z > 280) this.pos.z = 280;
+
+        if (this.boost < this.maxBoost) {
+          this.boost += 0.4;
+        }
+
+        this.speed = speed;
       }
 
       accelerate(amount) {
-        this.accelerationAmount = amount;
+        const cos = Math.cos(this.angle);
+        const sin = Math.sin(this.angle);
+        this.vel.x += cos * amount * 0.9;
+        this.vel.z += sin * amount * 0.9;
       }
 
       turn(amount) {
-        this.turnAmount += amount * 0.03;
+        this.angle += amount * 0.06;
       }
 
       addBoost() {
         if (this.boost > 0) {
-          this.boost = Math.max(0, this.boost - 0.5);
-          const forwardVec = new CANNON.Vec3(0, 0, 1);
-          this.body.quaternion.vmult(forwardVec, forwardVec);
-          this.body.velocity.x += forwardVec.x * 3;
-          this.body.velocity.y += forwardVec.y * 3;
-          this.body.velocity.z += forwardVec.z * 3;
-        }
-      }
-
-      update() {
-        this.mesh.position.copy(this.body.position);
-        this.mesh.quaternion.copy(this.body.quaternion);
-
-        // Aplicar aceleración
-        if (this.accelerationAmount !== 0) {
-          const forwardVec = new CANNON.Vec3(0, 0, 1);
-          this.body.quaternion.vmult(forwardVec, forwardVec);
-          const force = 15 * this.accelerationAmount;
-          this.body.velocity.x += forwardVec.x * force * 0.016;
-          this.body.velocity.y += forwardVec.y * force * 0.016;
-          this.body.velocity.z += forwardVec.z * force * 0.016;
-        }
-
-        // Aplicar giro
-        const turn = new CANNON.Quaternion();
-        turn.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), this.turnAmount);
-        this.body.quaternion = this.body.quaternion.mult(turn);
-        this.turnAmount *= 0.9;
-
-        // Limitar velocidad
-        const vel = this.body.getLinearVelocity();
-        const speed = vel.length();
-        this.speed = speed;
-
-        if (speed > this.maxSpeed) {
-          vel.scale(this.maxSpeed / speed, vel);
-          this.body.velocity = vel;
-        }
-
-        // Recargar boost
-        if (this.boost < this.maxBoost) {
-          this.boost = Math.min(this.maxBoost, this.boost + this.boostRechargeRate * 0.016);
-        }
-
-        // Rotación de ruedas
-        for (let wheel of this.wheels) {
-          wheel.rotation.x += this.speed * 0.016;
+          this.boost = Math.max(0, this.boost - 1.2);
+          const cos = Math.cos(this.angle);
+          const sin = Math.sin(this.angle);
+          this.vel.x += cos * 4;
+          this.vel.z += sin * 4;
         }
       }
 
       reset(x, z) {
-        this.body.position.set(x, this.height / 2 + 2, z);
-        this.body.velocity.set(0, 0, 0);
-        this.body.angularVelocity.set(0, 0, 0);
-        this.body.quaternion.set(0, 0, 0, 1);
+        this.pos = new Vector3(x, 10, z);
+        this.vel = new Vector3(0, 0, 0);
+        this.angle = 0;
         this.boost = this.maxBoost;
-        this.turnAmount = 0;
+      }
+
+      draw(ctx, screenX, screenY) {
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        ctx.rotate(this.angle);
+
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-this.width / 2, -this.length / 2, this.width, this.length);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.fillRect(-this.width / 2 + 2, -this.length / 2 + 3, this.width - 4, 7);
+
+        ctx.restore();
       }
     }
 
-    const carOrange = new Car(-30, -60, 0xff5a5a);
-    const carBlue = new Car(30, 60, 0x5aa7ff);
+    const ball = new Ball();
+    const carOrange = new Car(-60, -100, '#ff5a5a');
+    const carBlue = new Car(60, 100, '#5aa7ff');
 
-    // =========================
+    // =====================
     // IA
-    // =========================
-    class AIController {
+    // =====================
+    class AI {
       constructor(car) {
         this.car = car;
-        this.targetBall = ball;
       }
 
-      update() {
-        const carPos = this.car.body.position;
-        const ballPos = this.targetBall.body.position;
+      update(ball) {
+        const dx = ball.pos.x - this.car.pos.x;
+        const dz = ball.pos.z - this.car.pos.z;
+        const dist = Math.sqrt(dx * dx + dz * dz);
 
-        const dx = ballPos.x - carPos.x;
-        const dz = ballPos.z - carPos.z;
-        const distance = Math.sqrt(dx * dx + dz * dz);
+        const targetAngle = Math.atan2(dz, dx);
+        let angleDiff = targetAngle - this.car.angle;
 
-        const targetAngle = Math.atan2(dx, dz);
-        let carAngle = this.car.turnAmount;
-
-        let angleDiff = targetAngle - carAngle;
         if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
         if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
 
@@ -668,113 +476,179 @@
           this.car.turn(angleDiff > 0 ? 1 : -1);
         }
 
-        if (distance < 200) {
+        if (dist < 250) {
           this.car.accelerate(1);
-          if (distance < 50 && Math.random() > 0.8) {
+          if (dist < 100 && Math.random() > 0.75) {
             this.car.addBoost();
           }
         }
       }
     }
 
-    let aiController = null;
+    let ai = null;
 
-    // =========================
+    // =====================
+    // COLISIONES
+    // =====================
+    function checkCollision(car, ball) {
+      const dx = ball.pos.x - car.pos.x;
+      const dz = ball.pos.z - car.pos.z;
+      const dy = ball.pos.y - car.pos.y;
+      const dist = Math.sqrt(dx * dx + dz * dz + dy * dy);
+
+      const minDist = car.width / 2 + ball.radius;
+
+      if (dist < minDist && dist > 0) {
+        const nx = dx / dist;
+        const nz = dz / dist;
+        const ny = dy / dist;
+
+        const overlap = minDist - dist;
+        ball.pos.x += nx * overlap;
+        ball.pos.y += ny * overlap;
+        ball.pos.z += nz * overlap;
+
+        const carSpeedX = Math.cos(car.angle) * car.speed * 0.6;
+        const carSpeedZ = Math.sin(car.angle) * car.speed * 0.6;
+
+        ball.vel.x = nx * 14 + carSpeedX;
+        ball.vel.y = ny * 10;
+        ball.vel.z = nz * 14 + carSpeedZ;
+      }
+    }
+
+    // =====================
+    // GOLES
+    // =====================
+    function checkGoals() {
+      if (ball.pos.x < -230 && Math.abs(ball.pos.z) < 85 && ball.pos.y < 65) {
+        gameState.scoreBlue++;
+        setTimeout(resetRound, 500);
+      }
+
+      if (ball.pos.x > 230 && Math.abs(ball.pos.z) < 85 && ball.pos.y < 65) {
+        gameState.scoreOrange++;
+        setTimeout(resetRound, 500);
+      }
+    }
+
+    function resetRound() {
+      ball.reset();
+      carOrange.reset(-60, -100);
+      carBlue.reset(60, 100);
+    }
+
+    // =====================
+    // PROYECCIÓN 3D
+    // =====================
+    function project3D(x, y, z) {
+      const cameraZ = 200;
+      const scale = 300 / (cameraZ + z);
+
+      const screenX = canvas.width / 2 + x * scale;
+      const screenY = canvas.height / 2 + y * scale * 0.7;
+
+      return { x: screenX, y: screenY, scale };
+    }
+
+    // =====================
+    // DIBUJO
+    // =====================
+    function draw() {
+      ctx.fillStyle = '#0a0e27';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#1ca45a';
+      ctx.fillRect(0, canvas.height / 2 - 100, canvas.width, 200);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, canvas.height / 2 - 100);
+      ctx.lineTo(canvas.width / 2, canvas.height / 2 + 100);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, canvas.height / 2, 50, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(100, 150, 200, 0.2)';
+      ctx.fillRect(0, canvas.height / 2 - 60, 70, 120);
+      ctx.fillRect(canvas.width - 70, canvas.height / 2 - 60, 70, 120);
+
+      const ballScreen = project3D(ball.pos.x, ball.pos.y, ball.pos.z);
+      ball.draw(ctx, ballScreen.x, ballScreen.y);
+
+      const orangeScreen = project3D(carOrange.pos.x, carOrange.pos.y, carOrange.pos.z);
+      carOrange.draw(ctx, orangeScreen.x, orangeScreen.y);
+
+      const blueScreen = project3D(carBlue.pos.x, carBlue.pos.y, carBlue.pos.z);
+      carBlue.draw(ctx, blueScreen.x, blueScreen.y);
+    }
+
+    // =====================
     // CONTROLES
-    // =========================
+    // =====================
     document.addEventListener('keydown', (e) => {
-      keys[e.key.toLowerCase()] = true;
+      const key = e.key.toLowerCase();
+      keys[key] = true;
+
+      if (key === 'escape' || key === 'p') {
+        gameState.isPaused = !gameState.isPaused;
+        pauseMenu.classList.toggle('hidden');
+        if (!gameState.isPaused) {
+          updateModeDisplay();
+        }
+      }
+
+      if (key === '1') changeMode(0);
+      if (key === '2') changeMode(1);
+      if (key === '3') changeMode(2);
+      if (key === '4') changeMode(3);
     });
 
     document.addEventListener('keyup', (e) => {
       keys[e.key.toLowerCase()] = false;
     });
 
-    // =========================
-    // MENÚ
-    // =========================
-    document.getElementById('btnBot').addEventListener('click', () => {
-      gameState.gameMode = 'bot';
-      carBlue.isAI = true;
-      aiController = new AIController(carBlue);
-      startGame();
-    });
-
-    document.getElementById('btn2Player').addEventListener('click', () => {
-      gameState.gameMode = '2p';
-      carBlue.isAI = false;
-      aiController = null;
-      startGame();
-    });
-
-    function startGame() {
-      gameState.isRunning = true;
-      gameState.timeRemaining = 300;
+    function changeMode(mode) {
+      gameState.gameMode = mode;
       gameState.scoreOrange = 0;
       gameState.scoreBlue = 0;
+      gameState.timeRemaining = 300;
       ball.reset();
-      carOrange.reset(-30, -60);
-      carBlue.reset(30, 60);
-      menu.classList.add('hidden');
-      updateGameMode();
-    }
+      carOrange.reset(-60, -100);
+      carBlue.reset(60, 100);
+      gameState.isPaused = false;
+      pauseMenu.classList.add('hidden');
+      updateModeDisplay();
 
-    function updateGameMode() {
-      if (gameState.gameMode === 'bot') {
-        gameModeDisplay.textContent = 'MODO: 1vs IA';
-        controlsText.innerHTML = 'P1 (NARANJA): W/A/S/D + ESPACIO (Boost) | R: Reiniciar<br>';
+      if (mode === 2) {
+        ai = new AI(carBlue);
       } else {
-        gameModeDisplay.textContent = 'MODO: 2 JUGADORES LOCAL';
-        controlsText.innerHTML = 'P1 (NARANJA): W/A/S/D + ESPACIO (Boost)<br>P2 (AZUL): FLECHAS + SHIFT (Boost)';
+        ai = null;
       }
     }
 
-    // =========================
-    // CÁMARA
-    // =========================
-    function updateCamera() {
-      const car = carOrange;
-      const targetPos = car.body.position;
-
-      camera.position.lerp(
-        new THREE.Vector3(
-          targetPos.x + 50,
-          targetPos.y + 30,
-          targetPos.z - 60
-        ),
-        0.1
-      );
-      camera.lookAt(
-        targetPos.x,
-        targetPos.y + 10,
-        targetPos.z
-      );
+    function resumeGame() {
+      gameState.isPaused = false;
+      pauseMenu.classList.add('hidden');
     }
 
-    // =========================
-    // DETECCIÓN DE GOLES
-    // =========================
-    function checkGoals() {
-      const ballPos = ball.body.position;
-
-      if (ballPos.x < -FIELD_WIDTH / 2 - 10 && Math.abs(ballPos.y) < 20 && Math.abs(ballPos.z) < 30) {
-        gameState.scoreBlue++;
-        ball.reset();
-        carOrange.reset(-30, -60);
-        carBlue.reset(30, 60);
-      }
-
-      if (ballPos.x > FIELD_WIDTH / 2 + 10 && Math.abs(ballPos.y) < 20 && Math.abs(ballPos.z) < 30) {
-        gameState.scoreOrange++;
-        ball.reset();
-        carOrange.reset(-30, -60);
-        carBlue.reset(30, 60);
-      }
+    function updateModeDisplay() {
+      const modes = ['PRÁCTICA', '2 JUGADORES', 'vs IA', 'ENTRENO'];
+      const controls = [
+        '1=Práctica | 2=2 Jugadores | 3=vs IA<br>P=Pausa | W/A/S/D=Mover | ESPACIO=Boost',
+        '1=Práctica | 2=2 Jugadores | 3=vs IA<br>P1: W/A/S/D+ESPACIO | P2: FLECHAS+SHIFT',
+        '1=Práctica | 2=2 Jugadores | 3=vs IA<br>Tú vs IA - W/A/S/D+ESPACIO',
+        'ENTRENO DE DELANTERO - Anota goles'
+      ];
+      modeDisplay.innerHTML = `<strong>MODO: ${modes[gameState.gameMode]}</strong><br>${controls[gameState.gameMode]}`;
     }
 
-    // =========================
-    // BUCLE PRINCIPAL
-    // =========================
+    // =====================
+    // LOOP PRINCIPAL
+    // =====================
     let lastTime = Date.now();
 
     function gameLoop() {
@@ -782,74 +656,80 @@
       const deltaTime = (now - lastTime) / 1000;
       lastTime = now;
 
-      if (gameState.isRunning) {
-        // Controles Player 1
+      if (!gameState.isPaused) {
+        // Controles
         if (keys['w']) carOrange.accelerate(1);
         else if (keys['s']) carOrange.accelerate(-1);
-        else carOrange.accelerate(0);
 
         if (keys['a']) carOrange.turn(-1);
         if (keys['d']) carOrange.turn(1);
 
         if (keys[' ']) carOrange.addBoost();
 
-        // Controles Player 2 o IA
-        if (gameState.gameMode === '2p') {
+        if (gameState.gameMode === 1) {
           if (keys['arrowup']) carBlue.accelerate(1);
           else if (keys['arrowdown']) carBlue.accelerate(-1);
-          else carBlue.accelerate(0);
 
           if (keys['arrowleft']) carBlue.turn(-1);
           if (keys['arrowright']) carBlue.turn(1);
 
           if (keys['shift']) carBlue.addBoost();
-        } else if (aiController) {
-          aiController.update();
+        } else if (gameState.gameMode === 2 && ai) {
+          ai.update(ball);
+        } else if (gameState.gameMode === 3) {
+          // Entreno: IA intenta defender
+          ai = new AI(carBlue);
+          ai.update(ball);
+        } else {
+          // Práctica: ambos bajo control del jugador o semi-automáticos
+          carBlue.accelerate(0.3);
         }
 
         if (keys['r']) {
-          ball.reset();
-          carOrange.reset(-30, -60);
-          carBlue.reset(30, 60);
+          resetRound();
         }
 
-        world.step(1 / 60);
-
+        // Actualizar
         carOrange.update();
         carBlue.update();
         ball.update();
 
+        checkCollision(carOrange, ball);
+        checkCollision(carBlue, ball);
+
         checkGoals();
 
-        gameState.timeRemaining = Math.max(0, gameState.timeRemaining - deltaTime);
-        const minutes = Math.floor(gameState.timeRemaining / 60);
-        const seconds = Math.floor(gameState.timeRemaining % 60);
-        timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        // Timer
+        gameState.timeRemaining -= deltaTime;
+        if (gameState.timeRemaining < 0) {
+          gameState.timeRemaining = 0;
+          gameState.isPaused = true;
+          pauseTitle.textContent = 'FIN DEL PARTIDO';
+          pauseScore.textContent = `${gameState.scoreOrange} - ${gameState.scoreBlue}`;
+          pauseMenu.classList.remove('hidden');
+        }
 
+        // UI
         scoreOrangeEl.textContent = gameState.scoreOrange;
         scoreBlueEl.textContent = gameState.scoreBlue;
-        boostFillEl.style.width = (carOrange.boost / carOrange.maxBoost * 100) + '%';
+        boostBarEl.style.width = (carOrange.boost / carOrange.maxBoost * 100) + '%';
         speedValueEl.textContent = Math.floor(carOrange.speed * 3.6);
 
-        updateCamera();
-
-        if (gameState.timeRemaining <= 0) {
-          gameState.isRunning = false;
-          menu.classList.remove('hidden');
-          gameModeDisplay.textContent = `FINAL: NARANJA ${gameState.scoreOrange} - AZUL ${gameState.scoreBlue}`;
-        }
+        const min = Math.floor(gameState.timeRemaining / 60);
+        const sec = Math.floor(gameState.timeRemaining % 60);
+        timerEl.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
       }
 
-      renderer.render(scene, camera);
+      draw();
       requestAnimationFrame(gameLoop);
     }
 
     window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     });
 
+    updateModeDisplay();
     gameLoop();
   </script>
 </body>
