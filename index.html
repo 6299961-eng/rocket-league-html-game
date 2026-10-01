@@ -3,22 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rocket League 3D - Mejorado</title>
+  <title>Rocket League 2D - Plataformer</title>
   <style>
-    html, body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
       width: 100%;
       height: 100%;
-      overflow: hidden;
-      background: #071420;
-      font-family: Arial, sans-serif;
+      background: #0a1428;
+      font-family: 'Arial', sans-serif;
       color: white;
+      overflow: hidden;
+    }
+
+    #gameContainer {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(180deg, #0f1f3c 0%, #1a2d4d 50%, #0d1b30 100%);
+      overflow: hidden;
     }
 
     canvas {
       display: block;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
+      background: inherit;
     }
 
     #hud {
@@ -30,708 +44,868 @@
 
     .scoreboard {
       position: absolute;
-      top: 18px;
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 36px;
-      font-weight: 800;
-      font-size: clamp(24px, 2.8vw, 42px);
-      letter-spacing: 2px;
+      gap: 40px;
+      font-weight: 900;
+      font-size: 48px;
+      letter-spacing: 3px;
+      z-index: 10;
     }
 
     .score-box {
-      min-width: 90px;
+      min-width: 120px;
       text-align: center;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 255, 255, 0.3);
       border-radius: 12px;
-      padding: 8px 18px;
+      padding: 10px 30px;
+      backdrop-filter: blur(8px);
     }
 
-    .orange { color: #ff685e; }
-    .blue { color: #5bb3ff; }
+    .orange { color: #ff6b4d; text-shadow: 0 0 10px #ff6b4d; }
+    .blue { color: #5bb3ff; text-shadow: 0 0 10px #5bb3ff; }
 
     .timer {
       position: absolute;
       top: 24px;
       right: 24px;
-      font-weight: 800;
-      font-size: clamp(22px, 2.5vw, 36px);
-      background: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 10px;
-      padding: 8px 18px;
+      font-weight: 900;
+      font-size: 40px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 12px 24px;
+      backdrop-filter: blur(8px);
+      z-index: 10;
     }
 
     .mode-panel {
       position: absolute;
-      top: 16px;
-      left: 18px;
-      width: 280px;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.15);
+      top: 20px;
+      left: 20px;
+      width: 300px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(90, 167, 255, 0.5);
       border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 12px;
-      line-height: 1.7;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.8;
+      backdrop-filter: blur(8px);
+      z-index: 10;
     }
 
-    .boost {
+    .info-panel {
       position: absolute;
-      left: 18px;
-      bottom: 16px;
-      width: 220px;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(90, 167, 255, 0.5);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
+      line-height: 1.6;
+      width: 320px;
+      backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+
+    .boost-bar {
+      position: absolute;
+      left: 20px;
+      bottom: 160px;
+      width: 280px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(77, 216, 250, 0.6);
+      border-radius: 10px;
+      padding: 10px;
+      backdrop-filter: blur(8px);
+      z-index: 10;
     }
 
     .boost-label {
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 1px;
       margin-bottom: 6px;
+      color: #4dd8fa;
     }
 
-    .bar {
+    .bar-bg {
       width: 100%;
-      height: 18px;
-      background: rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
+      height: 22px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(77, 216, 250, 0.4);
+      border-radius: 6px;
       overflow: hidden;
     }
 
-    .fill {
+    .bar-fill {
       height: 100%;
       width: 100%;
-      background: linear-gradient(90deg, #4dd8fa, #2f9cff);
-      transition: width 0.08s linear;
+      background: linear-gradient(90deg, #00d4ff, #0099ff);
+      transition: width 0.1s ease;
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
     }
 
-    .controls {
+    .player-stats {
       position: absolute;
-      left: 18px;
-      bottom: 70px;
-      width: 300px;
-      background: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.15);
+      right: 20px;
+      bottom: 20px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(77, 216, 250, 0.6);
       border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 12px;
+      padding: 14px;
+      min-width: 200px;
+      font-size: 14px;
       line-height: 1.8;
+      backdrop-filter: blur(8px);
+      z-index: 10;
     }
 
-    .speed {
-      position: absolute;
-      right: 18px;
-      bottom: 18px;
-      background: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 10px;
-      padding: 8px 18px;
-      text-align: center;
-      min-width: 120px;
-    }
-
-    .speed-number {
-      font-size: 30px;
-      font-weight: 800;
-      color: #88d0ff;
-    }
-
-    .speed-label {
+    .stat-label {
+      color: #aaa;
       font-size: 11px;
-      color: #d6ebff;
-      letter-spacing: 2px;
       text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    .stat-value {
+      color: #4dd8fa;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .notification {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 72px;
+      font-weight: 900;
+      text-shadow: 0 0 20px currentColor;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .notification.show {
+      animation: popNotification 1.2s ease-out;
+    }
+
+    @keyframes popNotification {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.3);
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.8);
+      }
+    }
+
+    .debug {
+      position: absolute;
+      top: 20px;
+      right: 400px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      font-size: 11px;
+      font-family: monospace;
+      color: #0f0;
+      display: none;
+      z-index: 5;
     }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
-
-  <div id="hud">
-    <div class="scoreboard">
-      <div class="score-box orange" id="scoreOrange">0</div>
-      <div class="score-box blue" id="scoreBlue">0</div>
-    </div>
-
-    <div class="timer" id="timer">5:00</div>
-
-    <div class="mode-panel" id="modePanel">
-      <strong>MODO: PRÁCTICA</strong><br>
-      1 = Práctica<br>
-      2 = 2 Jugadores<br>
-      3 = VS Bot<br>
-      4 = Entrenamiento<br>
-      P = Pausa<br>
-      R = Reiniciar
-    </div>
-
-    <div class="controls">
-      P1: W/A/S/D + ESPACIO<br>
-      P2: ↑/←/↓/→ + SHIFT<br>
-      Bot: IA controla azul
-    </div>
-
-    <div class="boost">
-      <div class="boost-label">Boost</div>
-      <div class="bar">
-        <div class="fill" id="boostFill"></div>
+  <div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="hud">
+      <div class="scoreboard">
+        <div class="score-box orange" id="scoreOrange">0</div>
+        <div class="score-box blue" id="scoreBlue">0</div>
       </div>
+
+      <div class="timer" id="timer">5:00</div>
+
+      <div class="mode-panel" id="modePanel">
+        <strong style="color: #5bb3ff;">⚙ MODOS</strong><br>
+        <span style="font-size: 11px;">1 = Práctica<br>2 = 2 Jugadores<br>3 = VS Bot<br>P = Pausa | R = Reiniciar</span>
+      </div>
+
+      <div class="info-panel">
+        <strong style="color: #4dd8fa;">🎮 CONTROLES</strong><br>
+        <span style="color: #ff6b4d;">P1:</span> A/D para mover | W para saltar<br>
+        <span style="color: #5bb3ff;">P2:</span> ← → para mover | ↑ para saltar<br>
+        <span style="font-size: 11px; color: #aaa;">SPACE/SHIFT = Boost</span>
+      </div>
+
+      <div class="boost-bar">
+        <div class="boost-label">⚡ BOOST</div>
+        <div class="bar-bg">
+          <div class="bar-fill" id="boostFill"></div>
+        </div>
+      </div>
+
+      <div class="player-stats">
+        <div>
+          <div class="stat-label">Velocidad</div>
+          <div class="stat-value" id="speedValue">0</div>
+        </div>
+        <div>
+          <div class="stat-label">Altura</div>
+          <div class="stat-value" id="heightValue">0</div>
+        </div>
+        <div>
+          <div class="stat-label">Tiempo aire</div>
+          <div class="stat-value" id="airTimeValue">0s</div>
+        </div>
+      </div>
+
+      <div class="notification" id="notif"></div>
     </div>
 
-    <div class="speed">
-      <div class="speed-number" id="speedValue">0</div>
-      <div class="speed-label">Km/h</div>
-    </div>
+    <div class="debug" id="debug"></div>
   </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setClearColor(0x071b2f);
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x071b2f, 90, 420);
-
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(0, 24, -28);
-
-    const ambient = new THREE.HemisphereLight(0xcfeaff, 0x182b3a, 1.4);
-    scene.add(ambient);
-
-    const sun = new THREE.DirectionalLight(0xffffff, 1.7);
-    sun.position.set(90, 140, 40);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = -180;
-    sun.shadow.camera.right = 180;
-    sun.shadow.camera.top = 180;
-    sun.shadow.camera.bottom = -180;
-    scene.add(sun);
-
-    const fieldHalfX = 70;
-    const fieldHalfZ = 120;
-    const goalDepth = 20;
-    const goalHeight = 20;
-
-    const world = {
+    // Configuración del juego
+    const game = {
+      width: canvas.width,
+      height: canvas.height,
       scoreOrange: 0,
       scoreBlue: 0,
       timeRemaining: 300,
-      mode: 0,
-      paused: false
+      mode: 0, // 0: práctica, 1: 2 jugadores, 2: VS Bot
+      paused: false,
+      cameraFollow: true,
     };
 
-    const keys = {};
-    const clock = new THREE.Clock();
+    // Mundo físico
+    const physics = {
+      gravity: 0.6,
+      friction: 0.92,
+      airResistance: 0.99,
+      maxFallSpeed: 14
+    };
 
-    const scoreOrangeEl = document.getElementById('scoreOrange');
-    const scoreBlueEl = document.getElementById('scoreBlue');
-    const timerEl = document.getElementById('timer');
-    const boostFillEl = document.getElementById('boostFill');
-    const speedValueEl = document.getElementById('speedValue');
-    const modePanelEl = document.getElementById('modePanel');
+    // Objetos del juego
+    const players = {};
+    const ball = {
+      x: game.width / 2,
+      y: game.height / 2 - 40,
+      vx: 0,
+      vy: 0,
+      radius: 12,
+      mass: 0.8,
+      elasticity: 0.88,
+      friction: 0.94,
+      lastTouchPlayer: null
+    };
 
-    let audioCtx = null;
-    function getAudioCtx() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      return audioCtx;
+    // Crear plataformas
+    const platforms = [
+      // Plataforma base
+      { x: 0, y: game.height - 80, width: game.width, height: 80, color: '#1e5a3a', solid: true },
+      
+      // Plataformas laterales
+      { x: 40, y: game.height - 180, width: 120, height: 20, color: '#2a7a5a', solid: true },
+      { x: game.width - 160, y: game.height - 180, width: 120, height: 20, color: '#2a7a5a', solid: true },
+      
+      // Plataformas altas
+      { x: 200, y: game.height - 300, width: 140, height: 20, color: '#3a9a7a', solid: true },
+      { x: game.width - 340, y: game.height - 300, width: 140, height: 20, color: '#3a9a7a', solid: true },
+      
+      // Plataformas centrales
+      { x: game.width / 2 - 70, y: game.height - 240, width: 140, height: 20, color: '#2a7a5a', solid: true },
+      
+      // Paredes laterales invisibles
+      { x: -30, y: 0, width: 30, height: game.height, color: 'transparent', solid: true },
+      { x: game.width, y: 0, width: 30, height: game.height, color: 'transparent', solid: true },
+      
+      // Pared trasera (meta)
+      { x: -60, y: game.height - 200, width: 60, height: 200, color: 'rgba(255, 107, 77, 0.3)', solid: true, goal: 'orange' },
+      { x: game.width, y: game.height - 200, width: 60, height: 200, color: 'rgba(91, 179, 255, 0.3)', solid: true, goal: 'blue' }
+    ];
+
+    // Partículas
+    let particles = [];
+
+    class Particle {
+      constructor(x, y, vx, vy, color, life = 0.5) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.color = color;
+        this.life = life;
+        this.maxLife = life;
+        this.size = 4;
+      }
+
+      update(dt) {
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        this.vy += physics.gravity * 0.3;
+        this.life -= dt;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.life / this.maxLife;
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size);
+        ctx.restore();
+      }
     }
 
-    function playTone(freq, duration, type = 'sine', volume = 0.04) {
+    function createParticles(x, y, count, color, speed) {
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count;
+        const v = speed * (0.8 + Math.random() * 0.4);
+        particles.push(new Particle(
+          x, y,
+          Math.cos(angle) * v,
+          Math.sin(angle) * v - 2,
+          color,
+          0.6
+        ));
+      }
+    }
+
+    // Crear jugadores
+    function createPlayer(x, y, color, keys) {
+      return {
+        x, y,
+        vx: 0,
+        vy: 0,
+        width: 24,
+        height: 32,
+        color,
+        onGround: false,
+        onWall: false,
+        airTime: 0,
+        boost: 100,
+        maxBoost: 100,
+        boostRecoveryRate: 18,
+        keys,
+        jumpBuffer: 0,
+        direction: color === '#ff6b4d' ? 1 : -1,
+        lastGroundY: y,
+        velocityHistory: []
+      };
+    }
+
+    players.orange = createPlayer(100, game.height - 150, '#ff6b4d', {});
+    players.blue = createPlayer(game.width - 124, game.height - 150, '#5bb3ff', {});
+
+    const keys = {};
+
+    function playSound(freq, duration, type = 'sine', volume = 0.02) {
       try {
-        const ctx = getAudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.value = freq;
         gain.gain.value = volume;
+        
         osc.connect(gain);
-        gain.connect(ctx.destination);
+        gain.connect(audioCtx.destination);
+        
         osc.start();
-        gain.gain.setValueAtTime(volume, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-        osc.stop(ctx.currentTime + duration);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.stop(audioCtx.currentTime + duration);
       } catch (e) {}
     }
 
-    function createField() {
-      const ground = new THREE.Mesh(
-        new THREE.BoxGeometry(fieldHalfX * 2 + 30, 2, fieldHalfZ * 2 + 30),
-        new THREE.MeshStandardMaterial({ color: 0x1e9d62, roughness: 0.95, metalness: 0.08 })
-      );
-      ground.position.y = -1;
-      ground.receiveShadow = true;
-      scene.add(ground);
-
-      const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
-      const centerPoints = [
-        new THREE.Vector3(0, 0.2, -fieldHalfZ),
-        new THREE.Vector3(0, 0.2, fieldHalfZ)
-      ];
-      const centerLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(centerPoints), lineMat);
-      scene.add(centerLine);
-
-      const circleGeometry = new THREE.BufferGeometry().setFromPoints(
-        Array.from({ length: 64 }, (_, i) => {
-          const a = (i / 64) * Math.PI * 2;
-          return new THREE.Vector3(Math.cos(a) * 12, 0.2, Math.sin(a) * 12);
-        })
-      );
-      const circle = new THREE.Line(circleGeometry, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.8, transparent: true }));
-      scene.add(circle);
-
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x254f3d, roughness: 0.9, metalness: 0.2 });
-      const wallGeometry = new THREE.BoxGeometry(8, 12, fieldHalfZ * 2 + 20);
-      const leftWall = new THREE.Mesh(wallGeometry, wallMat);
-      leftWall.position.set(-fieldHalfX - 4, 6, 0);
-      leftWall.castShadow = true;
-      leftWall.receiveShadow = true;
-      scene.add(leftWall);
-
-      const rightWall = leftWall.clone();
-      rightWall.position.x = fieldHalfX + 4;
-      scene.add(rightWall);
-
-      const backWall = new THREE.Mesh(new THREE.BoxGeometry(fieldHalfX * 2 + 30, 12, 8), wallMat);
-      backWall.position.set(0, 6, fieldHalfZ + 4);
-      scene.add(backWall);
-
-      const frontWall = backWall.clone();
-      frontWall.position.z = -fieldHalfZ - 4;
-      scene.add(frontWall);
-
-      const goalFrameMat = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, metalness: 0.8, roughness: 0.3 });
-      const goalPosts = [
-        new THREE.Vector3(-fieldHalfX - 8, 6, -goalDepth),
-        new THREE.Vector3(-fieldHalfX - 8, 6, goalDepth),
-        new THREE.Vector3(fieldHalfX + 8, 6, -goalDepth),
-        new THREE.Vector3(fieldHalfX + 8, 6, goalDepth)
-      ];
-
-      goalPosts.forEach((pos) => {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(3, goalHeight, 3), goalFrameMat);
-        post.position.copy(pos);
-        scene.add(post);
-      });
-
-      const leftGoalBar = new THREE.Mesh(new THREE.BoxGeometry(3, 3, goalDepth * 2), goalFrameMat);
-      leftGoalBar.position.set(-fieldHalfX - 8, goalHeight / 2 + 2, 0);
-      scene.add(leftGoalBar);
-
-      const rightGoalBar = leftGoalBar.clone();
-      rightGoalBar.position.x = fieldHalfX + 8;
-      scene.add(rightGoalBar);
+    function showNotification(text, color) {
+      const notif = document.getElementById('notif');
+      notif.textContent = text;
+      notif.style.color = color;
+      notif.classList.remove('show');
+      void notif.offsetWidth;
+      notif.classList.add('show');
     }
 
-    function createDefaultCar(color) {
-      const group = new THREE.Group();
-      const body = new THREE.Mesh(
-        new THREE.BoxGeometry(3.2, 1.4, 5.4),
-        new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.85 })
-      );
-      body.castShadow = true;
-      body.receiveShadow = true;
-      group.add(body);
+    function updatePlayer(player, dt, playerName) {
+      const isOrange = playerName === 'orange';
+      const keyMap = isOrange ? { left: 'a', right: 'd', jump: 'w', boost: ' ' } : { left: 'arrowleft', right: 'arrowright', jump: 'arrowup', boost: 'shift' };
 
-      const cabin = new THREE.Mesh(
-        new THREE.BoxGeometry(2.2, 1.2, 2.6),
-        new THREE.MeshStandardMaterial({ color: 0x111822, roughness: 0.35, metalness: 0.7 })
-      );
-      cabin.position.y = 1.1;
-      cabin.position.z = -0.1;
-      cabin.castShadow = true;
-      group.add(cabin);
+      // Entrada
+      const moveInput = (keys[keyMap.left] ? -1 : 0) + (keys[keyMap.right] ? 1 : 0);
+      const jumpInput = keys[keyMap.jump];
+      const boostInput = keys[keyMap.boost];
 
-      const wheelGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.45, 18);
-      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1b1d20, roughness: 0.9, metalness: 0.2 });
-      const offsets = [
-        [-1.4, -0.18, 1.55],
-        [1.4, -0.18, 1.55],
-        [-1.4, -0.18, -1.55],
-        [1.4, -0.18, -1.55]
-      ];
+      // Movimiento horizontal
+      if (moveInput !== 0) {
+        player.vx += moveInput * 0.35;
+        if (player.direction !== moveInput) {
+          player.direction = moveInput;
+        }
+      } else {
+        player.vx *= 0.88;
+      }
 
-      offsets.forEach(([x, y, z]) => {
-        const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(x, y, z);
-        wheel.castShadow = true;
-        group.add(wheel);
-      });
+      player.vx = Math.max(-8.5, Math.min(8.5, player.vx));
 
-      group.position.set(0, 2.8, 0);
-      group.rotation.y = Math.PI;
-      scene.add(group);
-      return group;
-    }
+      // Salto
+      if (jumpInput && (player.onGround || player.jumpBuffer > 0)) {
+        player.vy = -11.5;
+        player.jumpBuffer = 0;
+        player.onGround = false;
+        playSound(280 + Math.random() * 60, 0.08, 'sine', 0.015);
+        createParticles(player.x + player.width / 2, player.y + player.height, 8, player.color, 4);
+      }
 
-    function loadCarModel(color) {
-      const group = createDefaultCar(color);
+      if (!jumpInput) {
+        player.jumpBuffer = Math.max(0, player.jumpBuffer - dt);
+      }
 
-      if (window.THREE && window.THREE.OBJLoader) {
-        const loader = new THREE.OBJLoader();
-        loader.load(
-          './Car.obj',
-          function (obj) {
-            obj.traverse(function (child) {
-              if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-                child.material = new THREE.MeshStandardMaterial({
-                  color,
-                  roughness: 0.45,
-                  metalness: 0.8,
-                  emissive: 0x220800,
-                  emissiveIntensity: 0.15
-                });
-              }
-            });
-            obj.position.set(0, 2.8, 0);
-            obj.rotation.y = Math.PI;
-            scene.remove(group);
-            scene.add(obj);
-            return obj;
-          },
-          undefined,
-          function () {
-            // fallback: keep default car
+      // Boost
+      if (boostInput && player.boost > 5 && player.onGround) {
+        player.vx += player.direction * 0.25;
+        player.boost -= 3;
+        if (Math.random() < 0.3) {
+          createParticles(player.x + player.width / 2, player.y + player.height, 4, player.color, 5);
+        }
+      }
+
+      // Recuperar boost
+      if (!boostInput && player.boost < player.maxBoost) {
+        player.boost = Math.min(player.maxBoost, player.boost + player.boostRecoveryRate * dt);
+      }
+
+      // Física
+      player.vy += physics.gravity;
+      player.vy = Math.max(player.vy, -20);
+      player.vy = Math.min(player.vy, physics.maxFallSpeed);
+
+      // Airtime
+      if (!player.onGround) {
+        player.airTime += dt;
+      } else {
+        player.airTime = 0;
+      }
+
+      // Aplicar velocidad
+      player.x += player.vx;
+      player.y += player.vy;
+
+      // Colisiones con plataformas
+      player.onGround = false;
+      player.onWall = false;
+
+      platforms.forEach(platform => {
+        if (!platform.solid) return;
+
+        const pLeft = platform.x;
+        const pRight = platform.x + platform.width;
+        const pTop = platform.y;
+        const pBottom = platform.y + platform.height;
+
+        const pLeft_margin = pLeft - player.width / 2;
+        const pRight_margin = pRight + player.width / 2;
+        const pTop_margin = pTop - player.height;
+        const pBottom_margin = pBottom + player.height;
+
+        if (player.x + player.width > pLeft_margin && player.x < pRight_margin &&
+            player.y + player.height > pTop_margin && player.y < pBottom_margin) {
+
+          const overlapLeft = (player.x + player.width) - pLeft;
+          const overlapRight = pRight - player.x;
+          const overlapTop = (player.y + player.height) - pTop;
+          const overlapBottom = pBottom - player.y;
+
+          const minOverlapX = Math.min(overlapLeft, overlapRight);
+          const minOverlapY = Math.min(overlapTop, overlapBottom);
+
+          if (minOverlapY < minOverlapX) {
+            if (overlapTop < overlapBottom) {
+              player.y = pTop - player.height;
+              player.vy = 0;
+              player.onGround = true;
+              player.lastGroundY = player.y;
+              player.jumpBuffer = 0.1;
+            } else {
+              player.y = pBottom;
+              player.vy = 0;
+            }
+          } else {
+            if (overlapLeft < overlapRight) {
+              player.x = pLeft - player.width;
+              player.vx *= -0.4;
+            } else {
+              player.x = pRight;
+              player.vx *= -0.4;
+            }
+            player.onWall = true;
           }
-        );
+        }
+      });
+
+      // Límites de pantalla
+      if (player.x < 0) {
+        player.x = 0;
+        player.vx = Math.abs(player.vx) * 0.4;
+      }
+      if (player.x + player.width > game.width) {
+        player.x = game.width - player.width;
+        player.vx = -Math.abs(player.vx) * 0.4;
       }
 
-      return group;
-    }
-
-    function makeBall() {
-      const mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(2.7, 42, 42),
-        new THREE.MeshStandardMaterial({
-          color: 0xf0f0f0,
-          roughness: 0.35,
-          metalness: 0.7,
-          emissive: 0x0f1620,
-          emissiveIntensity: 0.15
-        })
-      );
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      scene.add(mesh);
-      return mesh;
-    }
-
-    const orangeCar = loadCarModel(0xff5d4d);
-    const blueCar = loadCarModel(0x5bb3ff);
-    const ballMesh = makeBall();
-
-    const carState = {
-      orange: { mesh: orangeCar, velocity: new THREE.Vector3(), boost: 100, maxBoost: 100, speed: 0, accel: 0, turn: 0, boosting: false },
-      blue: { mesh: blueCar, velocity: new THREE.Vector3(), boost: 100, maxBoost: 100, speed: 0, accel: 0, turn: 0, boosting: false }
-    };
-
-    const ballState = {
-      velocity: new THREE.Vector3(0, 0, 0),
-      position: new THREE.Vector3(0, 3.5, 0)
-    };
-
-    function resetRound() {
-      ballState.position.set(0, 3.5, 0);
-      ballState.velocity.set(0, 0, 0);
-      ballMesh.position.copy(ballState.position);
-
-      carState.orange.mesh.position.set(-22, 2.8, 0);
-      carState.orange.mesh.rotation.y = Math.PI;
-      carState.orange.velocity.set(0, 0, 0);
-      carState.orange.boost = 100;
-
-      carState.blue.mesh.position.set(22, 2.8, 0);
-      carState.blue.mesh.rotation.y = 0;
-      carState.blue.velocity.set(0, 0, 0);
-      carState.blue.boost = 100;
-    }
-
-    function setMode(mode) {
-      world.mode = mode;
-      world.scoreOrange = 0;
-      world.scoreBlue = 0;
-      world.timeRemaining = 300;
-      resetRound();
-
-      const labels = {
-        0: '<strong>MODO: PRÁCTICA</strong><br>1 = Práctica<br>2 = 2 Jugadores<br>3 = VS Bot<br>4 = Entrenamiento<br>P = Pausa<br>R = Reiniciar',
-        1: '<strong>MODO: 2 JUGADORES</strong><br>1 = Práctica<br>2 = 2 Jugadores<br>3 = VS Bot<br>4 = Entrenamiento<br>P1: W/A/S/D + Espacio<br>P2: Flechas + Shift',
-        2: '<strong>MODO: VS BOT</strong><br>1 = Práctica<br>2 = 2 Jugadores<br>3 = VS Bot<br>4 = Entrenamiento<br>Controla el coche naranja',
-        3: '<strong>MODO: ENTRENAMIENTO</strong><br>1 = Práctica<br>2 = 2 Jugadores<br>3 = VS Bot<br>4 = Entrenamiento<br>Intenta meter gol',
-      };
-      modePanelEl.innerHTML = labels[mode] || labels[0];
-    }
-
-    function updateModeForKeys() {
-      if (keys['1']) setMode(0);
-      if (keys['2']) setMode(1);
-      if (keys['3']) setMode(2);
-      if (keys['4']) setMode(3);
-    }
-
-    function updateCar(car, dt) {
-      const steering = car.mesh.rotation.y;
-      const forward = new THREE.Vector3(Math.sin(steering), 0, Math.cos(steering));
-      const lateral = new THREE.Vector3(forward.z, 0, -forward.x);
-
-      if (car.accel) {
-        car.velocity.addScaledVector(forward, car.accel * 18 * dt);
-      }
-      if (car.turn) {
-        car.mesh.rotation.y += car.turn * 1.6 * dt;
-      }
-
-      if (car.boosting && car.boost > 0) {
-        car.mesh.position.addScaledVector(forward, 34 * dt);
-        car.boost = Math.max(0, car.boost - 40 * dt);
-        playTone(190, 0.05, 'sawtooth', 0.015);
-      }
-
-      car.mesh.position.addScaledVector(car.velocity, dt);
-      car.speed = car.velocity.length();
-      car.velocity.multiplyScalar(0.985);
-
-      const x = THREE.MathUtils.clamp(car.mesh.position.x, -fieldHalfX + 8, fieldHalfX - 8);
-      const z = THREE.MathUtils.clamp(car.mesh.position.z, -fieldHalfZ + 8, fieldHalfZ - 8);
-      car.mesh.position.set(x, 2.8, z);
-
-      if (car.boost < car.maxBoost) {
-        car.boost = Math.min(car.maxBoost, car.boost + 12 * dt);
+      // Caída mortal
+      if (player.y > game.height + 100) {
+        player.x = playerName === 'orange' ? 100 : game.width - 124;
+        player.y = game.height - 150;
+        player.vx = 0;
+        player.vy = 0;
       }
     }
 
     function updateBall(dt) {
-      ballState.velocity.y -= 9.5 * dt;
-      ballState.position.addScaledVector(ballState.velocity, dt);
-      ballMesh.position.copy(ballState.position);
+      ball.vy += physics.gravity * 0.85;
+      ball.vy *= physics.friction;
+      ball.vx *= physics.airResistance;
 
-      if (ballState.position.y < 2.7) {
-        ballState.position.y = 2.7;
-        ballState.velocity.y *= -0.58;
-      }
+      ball.x += ball.vx;
+      ball.y += ball.vy;
 
-      const radius = 2.7;
-      if (ballState.position.x < -fieldHalfX + radius) {
-        const inGoal = Math.abs(ballState.position.z) < goalDepth && Math.abs(ballState.position.y) < goalHeight;
-        if (!inGoal) {
-          ballState.position.x = -fieldHalfX + radius;
-          ballState.velocity.x *= -0.86;
-        } else {
-          world.scoreBlue += 1;
-          playTone(660, 0.18, 'triangle', 0.04);
-          resetRound();
+      // Colisiones con plataformas
+      platforms.forEach(platform => {
+        if (!platform.solid) return;
+
+        const pLeft = platform.x;
+        const pRight = platform.x + platform.width;
+        const pTop = platform.y;
+        const pBottom = platform.y + platform.height;
+
+        if (ball.x + ball.radius > pLeft && ball.x - ball.radius < pRight &&
+            ball.y + ball.radius > pTop && ball.y - ball.radius < pBottom) {
+
+          if (platform.goal) {
+            if (platform.goal === 'orange' && ball.lastTouchPlayer === 'blue') {
+              game.scoreOrange += 1;
+              ball.lastTouchPlayer = null;
+              showNotification('⚽ ¡GOL NARANJA!', '#ff6b4d');
+              playSound(440, 0.2, 'sine', 0.04);
+              resetBall();
+              return;
+            }
+            if (platform.goal === 'blue' && ball.lastTouchPlayer === 'orange') {
+              game.scoreBlue += 1;
+              ball.lastTouchPlayer = null;
+              showNotification('⚽ ¡GOL AZUL!', '#5bb3ff');
+              playSound(660, 0.2, 'sine', 0.04);
+              resetBall();
+              return;
+            }
+          }
+
+          const overlapLeft = (ball.x + ball.radius) - pLeft;
+          const overlapRight = pRight - (ball.x - ball.radius);
+          const overlapTop = (ball.y + ball.radius) - pTop;
+          const overlapBottom = pBottom - (ball.y - ball.radius);
+
+          const minOverlapX = Math.min(overlapLeft, overlapRight);
+          const minOverlapY = Math.min(overlapTop, overlapBottom);
+
+          if (minOverlapY < minOverlapX) {
+            if (overlapTop < overlapBottom) {
+              ball.y = pTop - ball.radius;
+              ball.vy *= -ball.elasticity;
+            } else {
+              ball.y = pBottom + ball.radius;
+              ball.vy *= -ball.elasticity;
+            }
+          } else {
+            if (overlapLeft < overlapRight) {
+              ball.x = pLeft - ball.radius;
+              ball.vx *= -ball.elasticity;
+            } else {
+              ball.x = pRight + ball.radius;
+              ball.vx *= -ball.elasticity;
+            }
+          }
+
+          if (Math.abs(ball.vx) > 0.5 || Math.abs(ball.vy) > 0.5) {
+            playSound(200 + Math.random() * 100, 0.08, 'sine', 0.008);
+          }
         }
-      }
-      if (ballState.position.x > fieldHalfX - radius) {
-        const inGoal = Math.abs(ballState.position.z) < goalDepth && Math.abs(ballState.position.y) < goalHeight;
-        if (!inGoal) {
-          ballState.position.x = fieldHalfX - radius;
-          ballState.velocity.x *= -0.86;
-        } else {
-          world.scoreOrange += 1;
-          playTone(440, 0.18, 'triangle', 0.04);
-          resetRound();
+      });
+
+      // Colisiones con jugadores
+      Object.entries(players).forEach(([key, player]) => {
+        const dx = ball.x - (player.x + player.width / 2);
+        const dy = ball.y - (player.y + player.height / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = ball.radius + 12;
+
+        if (dist < minDist) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+
+          ball.x = player.x + player.width / 2 + nx * minDist;
+          ball.y = player.y + player.height / 2 + ny * minDist;
+
+          const playerSpeed = Math.abs(player.vx);
+          const power = 8 + playerSpeed * 0.6;
+          ball.vx = nx * power + player.vx * 0.35;
+          ball.vy = ny * power * 0.8 + player.vy * 0.2;
+
+          ball.lastTouchPlayer = key;
+
+          playSound(300 + Math.random() * 150, 0.1, 'square', 0.02);
+          createParticles(ball.x, ball.y, 12, '#ffeb3b', 6);
         }
-      }
-      if (ballState.position.z < -fieldHalfZ + radius) {
-        ballState.position.z = -fieldHalfZ + radius;
-        ballState.velocity.z *= -0.86;
-      }
-      if (ballState.position.z > fieldHalfZ - radius) {
-        ballState.position.z = fieldHalfZ - radius;
-        ballState.velocity.z *= -0.86;
-      }
+      });
 
-      ballMesh.position.copy(ballState.position);
+      // Límites
+      if (ball.x - ball.radius < -50) ball.x = -50 + ball.radius;
+      if (ball.x + ball.radius > game.width + 50) ball.x = game.width + 50 - ball.radius;
+      if (ball.y > game.height + 100) resetBall();
     }
 
-    function collideCarWithBall(car) {
-      const dx = ballState.position.x - car.mesh.position.x;
-      const dy = ballState.position.y - car.mesh.position.y;
-      const dz = ballState.position.z - car.mesh.position.z;
-      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      const minDist = 4.8;
-
-      if (dist < minDist) {
-        const nx = dx / (dist || 1);
-        const ny = dy / (dist || 1);
-        const nz = dz / (dist || 1);
-        const overlap = minDist - dist;
-
-        ballState.position.x += nx * overlap;
-        ballState.position.y += ny * overlap;
-        ballState.position.z += nz * overlap;
-
-        const power = 28 + car.speed * 0.25;
-        ballState.velocity.x += nx * power + car.velocity.x * 0.2;
-        ballState.velocity.y += ny * power * 0.8;
-        ballState.velocity.z += nz * power + car.velocity.z * 0.2;
-
-        playTone(240 + Math.random() * 120, 0.06, 'square', 0.026);
-      }
+    function resetBall() {
+      ball.x = game.width / 2;
+      ball.y = 100;
+      ball.vx = (Math.random() - 0.5) * 3;
+      ball.vy = 0;
+      ball.lastTouchPlayer = null;
     }
 
-    function updateBot() {
-      const botCar = carState.blue;
-      const orange = carState.orange;
-      const dx = orange.mesh.position.x - botCar.mesh.position.x;
-      const dz = orange.mesh.position.z - botCar.mesh.position.z;
-      const dist = Math.hypot(dx, dz);
-      const targetYaw = Math.atan2(dz, dx);
-      let diff = targetYaw - botCar.mesh.rotation.y;
-
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-
-      botCar.turn = diff * 0.6;
-      botCar.accel = dist > 20 ? 1 : 0.5;
-      botCar.boosting = dist < 18 && Math.random() < 0.03;
-
-      if (dist < 28) botCar.accel = 1.1;
+    function drawPlayer(player) {
+      ctx.save();
+      ctx.fillStyle = player.color;
+      ctx.shadowColor = player.color;
+      ctx.shadowBlur = 15;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      
+      // Ojos
+      ctx.fillStyle = '#fff';
+      const eyeY = player.y + 10;
+      ctx.fillRect(player.x + 6, eyeY, 4, 4);
+      ctx.fillRect(player.x + 14, eyeY, 4, 4);
+      
+      ctx.restore();
     }
 
-    function updateDrill() {
-      const botCar = carState.blue;
-      const dx = ballState.position.x - botCar.mesh.position.x;
-      const dz = ballState.position.z - botCar.mesh.position.z;
-      const dist = Math.hypot(dx, dz);
-      const targetYaw = Math.atan2(dz, dx);
-      let diff = targetYaw - botCar.mesh.rotation.y;
+    function drawBall() {
+      ctx.save();
+      ctx.fillStyle = '#f0f0f0';
+      ctx.shadowColor = '#ffeb3b';
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fill();
 
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      while (diff < -Math.PI) diff += Math.PI * 2;
+      // Líneas de la pelota
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.stroke();
 
-      botCar.turn = diff * 0.8;
-      botCar.accel = dist > 15 ? 1 : 0.6;
+      ctx.restore();
     }
 
-    function updateGame(dt) {
-      if (world.paused) return;
-
-      const orange = carState.orange;
-      orange.accel = 0;
-      orange.turn = 0;
-      orange.boosting = false;
-
-      if (keys['w']) orange.accel = 1;
-      if (keys['s']) orange.accel = -0.7;
-      if (keys['a']) orange.turn = -1;
-      if (keys['d']) orange.turn = 1;
-      if (keys[' ']) orange.boosting = true;
-
-      if (world.mode === 1) {
-        const blue = carState.blue;
-        blue.accel = 0;
-        blue.turn = 0;
-        blue.boosting = false;
-
-        if (keys['arrowup']) blue.accel = 1;
-        if (keys['arrowdown']) blue.accel = -0.7;
-        if (keys['arrowleft']) blue.turn = -1;
-        if (keys['arrowright']) blue.turn = 1;
-        if (keys['shift']) blue.boosting = true;
-      } else if (world.mode === 2) {
-        updateBot();
-      } else if (world.mode === 3) {
-        updateDrill();
-      } else {
-        carState.blue.turn = 0.8 * Math.sin(performance.now() * 0.0015);
-        carState.blue.accel = 0.7;
-        carState.blue.boosting = false;
-      }
-
-      if (keys['r']) resetRound();
-
-      updateCar(orange, dt);
-
-      if (world.mode === 1) {
-        updateCar(carState.blue, dt);
-      } else {
-        updateCar(carState.blue, dt);
-      }
-
-      updateBall(dt);
-      collideCarWithBall(orange);
-      collideCarWithBall(carState.blue);
-
-      world.timeRemaining = Math.max(0, world.timeRemaining - dt);
-      updateHUD();
+    function drawPlatforms() {
+      platforms.forEach(platform => {
+        if (platform.color !== 'transparent') {
+          ctx.save();
+          ctx.fillStyle = platform.color;
+          ctx.shadowColor = platform.color;
+          ctx.shadowBlur = 10;
+          ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+          
+          // Borde
+          if (platform.goal) {
+            ctx.strokeStyle = platform.color;
+            ctx.lineWidth = 3;
+          } else {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+          }
+          ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+          
+          ctx.restore();
+        }
+      });
     }
 
     function updateHUD() {
-      scoreOrangeEl.textContent = world.scoreOrange;
-      scoreBlueEl.textContent = world.scoreBlue;
+      document.getElementById('scoreOrange').textContent = game.scoreOrange;
+      document.getElementById('scoreBlue').textContent = game.scoreBlue;
 
-      const minutes = Math.floor(world.timeRemaining / 60);
-      const seconds = Math.floor(world.timeRemaining % 60);
-      timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      const min = Math.floor(game.timeRemaining / 60);
+      const sec = Math.floor(game.timeRemaining % 60);
+      document.getElementById('timer').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
 
-      boostFillEl.style.width = `${(carState.orange.boost / carState.orange.maxBoost) * 100}%`;
-      speedValueEl.textContent = Math.floor(carState.orange.speed * 0.9);
+      const orange = players.orange;
+      document.getElementById('boostFill').style.width = `${(orange.boost / orange.maxBoost) * 100}%`;
+      document.getElementById('speedValue').textContent = Math.abs(Math.floor(orange.vx * 8));
+      document.getElementById('heightValue').textContent = Math.max(0, Math.floor(game.height - orange.y)) + 'px';
+      document.getElementById('airTimeValue').textContent = (orange.airTime).toFixed(2) + 's';
     }
 
-    function updateCamera() {
-      const target = orangeCar.position.clone();
-      const behind = new THREE.Vector3(0, 10, -22).applyAxisAngle(new THREE.Vector3(0, 1, 0), orangeCar.rotation.y);
-      const desired = target.clone().add(behind);
-      camera.position.lerp(desired, 0.06);
-      camera.lookAt(target.x, target.y + 4, target.z);
+    function setMode(mode) {
+      game.mode = mode;
+      game.scoreOrange = 0;
+      game.scoreBlue = 0;
+      game.timeRemaining = 300;
+      resetBall();
+      players.orange.x = 100;
+      players.orange.y = game.height - 150;
+      players.blue.x = game.width - 124;
+      players.blue.y = game.height - 150;
+
+      const labels = {
+        0: '<strong style="color: #5bb3ff;">🏋️ MODO: PRÁCTICA</strong><br><span style="font-size: 11px;">Controla ambos jugadores<br>1 = Práctica | 2 = 2P | 3 = Bot</span>',
+        1: '<strong style="color: #5bb3ff;">👥 MODO: 2 JUGADORES</strong><br><span style="font-size: 11px;">Compite contra tu amigo<br>1 = Práctica | 2 = 2P | 3 = Bot</span>',
+        2: '<strong style="color: #5bb3ff;">🤖 MODO: VS BOT</strong><br><span style="font-size: 11px;">Juega contra la IA<br>1 = Práctica | 2 = 2P | 3 = Bot</span>'
+      };
+      document.getElementById('modePanel').innerHTML = labels[mode] || labels[0];
     }
 
-    function animate() {
-      const dt = Math.min(clock.getDelta(), 0.033);
-      updateModeForKeys();
-      updateGame(dt);
-      updateCamera();
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
+    function updateBot() {
+      const bot = players.blue;
+      const ballDist = Math.abs(ball.x - (bot.x + bot.width / 2));
+      const ballBelow = ball.y > bot.y;
+
+      if (ballDist > 80) {
+        if (ball.x > bot.x + bot.width / 2) {
+          keys['arrowright'] = true;
+          keys['arrowleft'] = false;
+        } else {
+          keys['arrowleft'] = true;
+          keys['arrowright'] = false;
+        }
+      } else {
+        keys['arrowleft'] = false;
+        keys['arrowright'] = false;
+      }
+
+      if (ballBelow && ballDist < 100 && Math.random() < 0.15) {
+        keys['arrowup'] = true;
+      } else {
+        keys['arrowup'] = false;
+      }
+
+      if (ballDist < 60 && Math.random() < 0.08) {
+        keys['shift'] = true;
+      } else {
+        keys['shift'] = false;
+      }
     }
 
-    window.addEventListener('keydown', function (event) {
-      const k = event.key.toLowerCase();
-      if (event.code === 'Space') {
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'p') {
+        game.paused = !game.paused;
+      } else if (k === 'r') {
+        resetBall();
+        players.orange.y = game.height - 150;
+        players.blue.y = game.height - 150;
+      } else if (['1', '2', '3'].includes(k)) {
+        setMode(parseInt(k) - 1);
+      } else if (e.code === 'Space') {
         keys[' '] = true;
-        event.preventDefault();
-      } else if (k === 'p') {
-        world.paused = !world.paused;
+        e.preventDefault();
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        keys[e.key.toLowerCase()] = true;
       } else {
         keys[k] = true;
       }
-      if (k === 'r') resetRound();
     });
 
-    window.addEventListener('keyup', function (event) {
-      const k = event.key.toLowerCase();
-      if (event.code === 'Space') {
+    window.addEventListener('keyup', (e) => {
+      const k = e.key.toLowerCase();
+      if (e.code === 'Space') {
         keys[' '] = false;
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        keys[e.key.toLowerCase()] = false;
       } else {
         keys[k] = false;
       }
     });
 
-    window.addEventListener('resize', function () {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      game.width = canvas.width;
+      game.height = canvas.height;
     });
 
-    createField();
+    const clock = { lastTime: Date.now() };
+
+    function gameLoop() {
+      const now = Date.now();
+      const dt = Math.min((now - clock.lastTime) / 1000, 0.033);
+      clock.lastTime = now;
+
+      if (!game.paused) {
+        if (game.mode === 2) updateBot();
+
+        updatePlayer(players.orange, dt, 'orange');
+        if (game.mode !== 2) {
+          players.blue.keys = keys;
+          updatePlayer(players.blue, dt, 'blue');
+        } else {
+          updatePlayer(players.blue, dt, 'blue');
+        }
+
+        updateBall(dt);
+
+        game.timeRemaining = Math.max(0, game.timeRemaining - dt);
+        if (game.timeRemaining <= 0) {
+          showNotification(game.scoreOrange > game.scoreBlue ? '🏆 ¡NARANJA GANA!' : '🏆 ¡AZUL GANA!', 
+                          game.scoreOrange > game.scoreBlue ? '#ff6b4d' : '#5bb3ff');
+          game.timeRemaining = 0;
+        }
+      }
+
+      // Actualizar partículas
+      particles = particles.filter(p => p.life > 0);
+      particles.forEach(p => p.update(dt));
+
+      updateHUD();
+
+      // Dibujar
+      ctx.fillStyle = 'rgba(15, 31, 60, 0.1)';
+      ctx.fillRect(0, 0, game.width, game.height);
+
+      drawPlatforms();
+      drawBall();
+      drawPlayer(players.orange);
+      drawPlayer(players.blue);
+
+      particles.forEach(p => p.draw());
+
+      requestAnimationFrame(gameLoop);
+    }
+
     setMode(0);
-    resetRound();
-    animate();
+    gameLoop();
   </script>
 </body>
 </html>
