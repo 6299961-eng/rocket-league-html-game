@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rocket League 3D - Mejorado</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #071420;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .scoreboard {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 36px;
+      font-weight: 800;
+      font-size: clamp(24px, 2.8vw, 42px);
+      letter-spacing: 2px;
+    }
+
+    .score-box {
+      min-width: 90px;
+      text-align: center;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 8px 18px;
+    }
+
+    .orange { color: #ff685e; }
+    .blue { color: #5bb3ff; }
+
+    .timer {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      font-weight: 800;
+      font-size: clamp(22px, 2.5vw, 36px);
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      padding: 8px 18px;
+    }
+
+    .mode-panel {
+      position: absolute;
+      top: 16px;
+      left: 18px;
+      width: 280px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .boost {
+      position: absolute;
+      left: 18px;
+      bottom: 16px;
+      width: 220px;
+    }
+
+    .boost-label {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .bar {
+      width: 100%;
+      height: 18px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #4dd8fa, #2f9cff);
+      transition: width 0.08s linear;
+    }
+
+    .controls {
+      position: absolute;
+      left: 18px;
+      bottom: 70px;
+      width: 300px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .speed {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 8px 18px;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .speed-number {
+      font-size: 30px;
+      font-weight: 800;
+      color: #88d0ff;
+    }
+
+    .speed-label {
+      font-size: 11px;
+      color: #d6ebff;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="hud">
+    <div class="scoreboard">
+      <div class="score-box orange" id="scoreOrange">0</div>
+      <div class="score-box blue" id="scoreBlue">0</div>
+    </div>
+
+    <div class="timer" id="timer">5:00</div>
+
+    <div class="mode-panel" id="modePanel">
+      <strong>MODO: PRÁCTICA</strong><br>
+      1 = Práctica<br>
+      2 = 2 Jugadores<br>
+      3 = VS Bot<br>
+      4 = Entrenamiento<br>
+      P = Pausa<br>
+      R = Reiniciar
+    </div>
+
+    <div class="controls">
+      P1: W/A/S/D + ESPACIO<br>
+      P2: ↑/←/↓/→ + SHIFT<br>
+      Bot: IA controla azul
+    </div>
+
+    <div class="boost">
+      <div class="boost-label">Boost</div>
+      <div class="bar">
+        <div class="fill" id="boostFill"></div>
+      </div>
+    </div>
+
+    <div class="speed">
+      <div class="speed-number" id="speedValue">0</div>
+      <div class="speed-label">Km/h</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+    import { OBJLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/OBJLoader.js';
+
+    const canvas = document.getElementById('gameCanvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setClearColor(0x0b1320);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x0b1320, 80, 420);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 26, -32);
+
+    const ambient = new THREE.HemisphereLight(0xcfeaff, 0x1b2b40, 1.2);
+    scene.add(ambient);
+
+    const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+    sun.position.set(80, 120, 40);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -180;
+    sun.shadow.camera.right = 180;
+    sun.shadow.camera.top = 180;
+    sun.shadow.camera.bottom = -180;
+    scene.add(sun);
+
+    const fieldHalfX = 70;
+    const fieldHalfZ = 120;
+    const goalDepth = 20;
+    const goalHeight = 20;
+
+    const world = {
+      radius: 2.8,
+      scoreOrange: 0,
+      scoreBlue: 0,
+      timeRemaining: 300,
+      mode: 0,
+      paused: false
+    };
+
+    const keys = {};
+    const clock = new THREE.Clock();
+
+    // HUD refs
+    const scoreOrangeEl = document.getElementById('scoreOrange');
+    const scoreBlueEl = document.getElementById('scoreBlue');
+    const timerEl = document.getElementById('timer');
+    const boostFillEl = document.getElementById('boostFill');
+    const speedValueEl = document.getElementById('speedValue');
+    const modePanelEl = document.getElementById('modePanel');
+
+    // audio
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTone(freq, duration, type = 'sine', volume = 0.04) {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.value = volume;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      gain.gain.setValueAtTime(volume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.stop(ctx.currentTime + duration);
+    }
+
+    function createField() {
+      const ground = new THREE.Mesh(
+        new THREE.BoxGeometry(fieldHalfX * 2 + 30, 2, fieldHalfZ * 2 + 30),
+        new THREE.MeshStandardMaterial({ color: 0x1e9d62, roughness: 0.95, metalness: 0.08 })
+      );
+      ground.position.y = -1;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.65 });
+      const centerPoints = [];
+      centerPoints.push(new THREE.Vector3(0, 0.2, -fieldHalfZ));
+      centerPoints.push(new THREE.Vector3(0, 0.2, fieldHalfZ));
+      const centerLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(centerPoints), lineMat);
+      scene.add(centerLine);
+
+      const circleGeo = new THREE.BufferGeometry().setFromPoints(
+        Array.from({ length: 64 }, (_, i) => {
+          const a = (i / 64) * Math.PI * 2;
+          return new THREE.Vector3(Math.cos(a) * 12, 0.2, Math.sin(a) * 12);
+        })
+      );
+      const circle = new THREE.Line(circleGeo, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.8, transparent: true }));
+      scene.add(circle);
+
+      // side walls + goal walls
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x264d3a, roughness: 0.9, metalness: 0.2 });
+      const wallGeometry = new THREE.BoxGeometry(8, 12, fieldHalfZ * 2 + 20);
+      const leftWall = new THREE.Mesh(wallGeometry, wallMat);
+      leftWall.position.set(-fieldHalfX - 4, 6, 0);
+      leftWall.castShadow = true;
+      leftWall.receiveShadow = true;
+      scene.add(leftWall);
+
+      const rightWall = leftWall.clone();
+      rightWall.position.x = fieldHalfX + 4;
+      scene.add(rightWall);
+
+      const backWall = new THREE.Mesh(new THREE.BoxGeometry(fieldHalfX * 2 + 30, 12, 8), wallMat);
+      backWall.position.set(0, 6, fieldHalfZ + 4);
+      backWall.castShadow = true;
+      backWall.receiveShadow = true;
+      scene.add(backWall);
+
+      const frontWall = backWall.clone();
+      frontWall.position.z = -fieldHalfZ - 4;
+      scene.add(frontWall);
+
+      // goal frame wings
+      const goalFrameMat = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, metalness: 0.8, roughness: 0.3 });
+      const goalPosts = [
+        new THREE.Vector3(-fieldHalfX - 8, 6, -goalDepth),
+        new THREE.Vector3(-fieldHalfX - 8, 6, goalDepth),
+        new THREE.Vector3(fieldHalfX + 8, 6, -goalDepth),
+        new THREE.Vector3(fieldHalfX + 8, 6, goalDepth)
+      ];
+      for (const pos of goalPosts) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(3, goalHeight, 3), goalFrameMat);
+        post.position.copy(pos);
+        scene.add(post);
+      }
+
+      const leftGoalBar = new THREE.Mesh(new THREE.BoxGeometry(3, 3, goalDepth * 2), goalFrameMat);
+      leftGoalBar.position.set(-fieldHalfX - 8, goalHeight / 2 + 2, 0);
+      scene.add(leftGoalBar);
+      const rightGoalBar = leftGoalBar.clone();
+      rightGoalBar.position.x = fieldHalfX + 8;
+      scene.add(rightGoalBar);
+    }
+
+    const loader = new OBJLoader();
+    let carModel = null;
+    loader.load(
+      './Car.obj',
+      (obj) => {
+        obj.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            child.material = new THREE.MeshStandardMaterial({
+              color: 0xff5a5a,
+              roughness: 0.5,
+              metalness: 0.8,
+              emissive: 0x220800
+            });
+          }
+        });
+        carModel = obj;
+      },
+      undefined,
+      (err) => {
+        console.error('Error cargando Car.obj', err);
+      }
+    );
+
+    function buildCar(color) {
+      const group = new THREE.Group();
+      if (carModel) {
+        const clone = carModel.clone();
+        clone.traverse((child) => {
+          if (child.isMesh) {
+            child.material = child.material.clone();
+            child.material.color = new THREE.Color(color);
+          }
+        });
+        group.add(clone);
+      } else {
+        const body = new THREE.Mesh(
+          new THREE.BoxGeometry(3.2, 1.4, 5.4),
+          new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.85 })
+        );
+        body.castShadow = true;
+        body.receiveShadow = true;
+        group.add(body);
+
+        const cabin = new THREE.Mesh(
+          new THREE.BoxGeometry(2.2, 1.2, 2.6),
+          new THREE.MeshStandardMaterial({ color: 0x111822, roughness: 0.35, metalness: 0.7 })
+        );
+        cabin.position.y = 1.1;
+        cabin.position.z = -0.1;
+        cabin.castShadow = true;
+        group.add(cabin);
+      }
+
+      // wheels
+      const wheelGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.45, 18);
+      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1b1d20, roughness: 0.9, metalness: 0.2 });
+      const wheelOffsets = [
+        [-1.4, -0.18, 1.55],
+        [1.4, -0.18, 1.55],
+        [-1.4, -0.18, -1.55],
+        [1.4, -0.18, -1.55]
+      ];
+      wheelOffsets.forEach(([x, y, z]) => {
+        const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(x, y, z);
+        wheel.castShadow = true;
+        group.add(wheel);
+      });
+
+      group.position.set(0, 2.8, 0);
+      group.rotation.y = Math.PI;
+      scene.add(group);
+      return group;
+    }
+
+    function makeBall() {
+      const mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(2.7, 42, 42),
+        new THREE.MeshStandardMaterial({
+          color: 0xf0f0f0,
+          roughness: 0.35,
+          metalness: 0.7,
+          emissive: 0x0f1620,
+          emissiveIntensity: 0.15
+        })
+      );
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      return mesh;
+    }
+
+    const orangeCar = buildCar(0xff5d4d);
+    const blueCar = buildCar(0x5bb3ff);
+    const ballMesh = makeBall();
+
+    const carState = {
+      orange: {
+        mesh: orangeCar,
+        velocity: new THREE.Vector3(),
+        yaw: Math.PI,
+        boost: 100,
+        maxBoost: 100,
+        speed: 0
+      },
+      blue: {
+        mesh: blueCar,
+        velocity: new THREE.Vector3(),
+        yaw: 0,
+        boost: 100,
+        maxBoost: 100,
+        speed: 0
+      }
+    };
+
+    const ballState = {
+      mesh: ballMesh,
+      velocity: new THREE.Vector3(0, 0, 0),
+      position: new THREE.Vector3(0, 3.5, 0)
+    };
+
+    function resetRound() {
+      ballState.position.set(0, 3.5, 0);
+      ballState.velocity.set(0, 0, 0);
+      ballMesh.position.copy(ballState.position);
+
+      carState.orange.mesh.position.set(-22, 2.8, 0);
+      carState.orange.mesh.rotation.y = Math.PI;
+      carState.orange.velocity.set(0, 0, 0);
+      carState.orange.boost = 100;
+
+      carState.blue.mesh.position.set(22, 2.8, 0);
+      carState.blue.mesh.rotation.y = 0;
+      carState.blue.velocity.set(0, 0, 0);
+      carState.blue.boost = 100;
+    }
+
+    function setMode(mode) {
+      world.mode = mode;
+      world.scoreOrange = 0;
+      world.scoreBlue = 0;
+      world.timeRemaining = 300;
+      resetRound();
+
+      const labels = {
+        0: '<strong>MODO: PRÁCTICA</strong><br>1 = Práctica<br>2 = 2 Jugadores<br>3 = VS Bot<br>4 = Entrenamiento<br>P = Pausa<br>R = Reiniciar',
+        1: '<strong>MODO: 2 JUGADORES</strong><br>1 = Práctica<br>2 = 2 Jugadores<br>3 = VS Bot<br>4 = Entrenamiento<br>P1: W/A/S/D + Espacio<br>P2: Flechas + Shift',
+        2: '<strong>MODO: VS BOT</strong><br>1 = Práctica<br>2 = 2 Jugadores<br>3 = VS Bot<br>4 = Entrenamiento<br>Controla el coche naranja',
+        3: '<strong>MODO: ENTRENAMIENTO</strong><br>1 = Práctica<br>2 = 2 Jugadores<br>3 = VS Bot<br>4 = Entrenamiento<br>Intenta meter gol',
+      };
+      modePanelEl.innerHTML = labels[mode] || labels[0];
+    }
+
+    function updateModeForKeys() {
+      if (keys['1']) setMode(0);
+      if (keys['2']) setMode(1);
+      if (keys['3']) setMode(2);
+      if (keys['4']) setMode(3);
+    }
+
+    function updateCar(car, dt) {
+      const steering = car.mesh.rotation.y;
+      const forward = new THREE.Vector3(Math.sin(steering), 0, Math.cos(steering));
+      const lateral = new THREE.Vector3(forward.z, 0, -forward.x);
+
+      const accelInput = new THREE.Vector3();
+      const turnInput = new THREE.Vector3();
+
+      if (car.accel) {
+        accelInput.copy(forward).multiplyScalar(car.accel);
+      }
+      if (car.turn) {
+        turnInput.copy(lateral).multiplyScalar(car.turn * 0.7);
+      }
+
+      car.velocity.addScaledVector(accelInput, 18 * dt);
+      car.mesh.rotation.y += car.turn * 1.6 * dt;
+
+      if (car.boosting) {
+        if (car.boost > 0) {
+          car.mesh.position.addScaledVector(forward, 34 * dt);
+          car.boost = Math.max(0, car.boost - 40 * dt);
+          playTone(190, 0.05, 'sawtooth', 0.015);
+        }
+      }
+
+      car.mesh.position.addScaledVector(car.velocity, dt);
+      car.speed = car.velocity.length();
+      car.velocity.multiplyScalar(0.985);
+
+      // clamp to field
+      const x = THREE.MathUtils.clamp(car.mesh.position.x, -fieldHalfX + 8, fieldHalfX - 8);
+      const z = THREE.MathUtils.clamp(car.mesh.position.z, -fieldHalfZ + 8, fieldHalfZ - 8);
+      car.mesh.position.set(x, 2.8, z);
+
+      if (car.boost < car.maxBoost) {
+        car.boost = Math.min(car.maxBoost, car.boost + 12 * dt);
+      }
+    }
+
+    function updateBall(dt) {
+      ballState.velocity.y -= 9.5 * dt;
+      ballState.position.addScaledVector(ballState.velocity, dt);
+      ballMesh.position.copy(ballState.position);
+
+      if (ballState.position.y < 2.7) {
+        ballState.position.y = 2.7;
+        ballState.velocity.y *= -0.58;
+      }
+
+      const radius = 2.7;
+      if (ballState.position.x < -fieldHalfX + radius) {
+        const inGoal = Math.abs(ballState.position.z) < goalDepth && Math.abs(ballState.position.y) < goalHeight;
+        if (!inGoal) {
+          ballState.position.x = -fieldHalfX + radius;
+          ballState.velocity.x *= -0.86;
+        } else {
+          world.scoreBlue += 1;
+          playTone(660, 0.18, 'triangle', 0.04);
+          resetRound();
+        }
+      }
+      if (ballState.position.x > fieldHalfX - radius) {
+        const inGoal = Math.abs(ballState.position.z) < goalDepth && Math.abs(ballState.position.y) < goalHeight;
+        if (!inGoal) {
+          ballState.position.x = fieldHalfX - radius;
+          ballState.velocity.x *= -0.86;
+        } else {
+          world.scoreOrange += 1;
+          playTone(440, 0.18, 'triangle', 0.04);
+          resetRound();
+        }
+      }
+      if (ballState.position.z < -fieldHalfZ + radius) {
+        ballState.position.z = -fieldHalfZ + radius;
+        ballState.velocity.z *= -0.86;
+      }
+      if (ballState.position.z > fieldHalfZ - radius) {
+        ballState.position.z = fieldHalfZ - radius;
+        ballState.velocity.z *= -0.86;
+      }
+
+      ballMesh.position.copy(ballState.position);
+    }
+
+    function collideCarWithBall(car) {
+      const dx = ballState.position.x - car.mesh.position.x;
+      const dy = ballState.position.y - car.mesh.position.y;
+      const dz = ballState.position.z - car.mesh.position.z;
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const minDist = 4.8;
+
+      if (dist < minDist) {
+        const nx = dx / (dist || 1);
+        const ny = dy / (dist || 1);
+        const nz = dz / (dist || 1);
+        const overlap = minDist - dist;
+
+        ballState.position.x += nx * overlap;
+        ballState.position.y += ny * overlap;
+        ballState.position.z += nz * overlap;
+
+        const power = 28 + car.speed * 0.25;
+        ballState.velocity.x += nx * power + car.velocity.x * 0.2;
+        ballState.velocity.y += ny * power * 0.8;
+        ballState.velocity.z += nz * power + car.velocity.z * 0.2;
+
+        playTone(240 + Math.random() * 120, 0.06, 'square', 0.026);
+      }
+    }
+
+    function updateBot(dt) {
+      const botCar = carState.blue;
+      const orange = carState.orange;
+      const dx = orange.mesh.position.x - botCar.mesh.position.x;
+      const dz = orange.mesh.position.z - botCar.mesh.position.z;
+      const dist = Math.hypot(dx, dz);
+      const targetYaw = Math.atan2(dz, dx);
+      let diff = targetYaw - botCar.mesh.rotation.y;
+
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+
+      botCar.turn = diff * 0.6;
+      botCar.accel = dist > 20 ? 1 : 0.5;
+
+      if (dist < 18 && Math.random() < 0.03) {
+        botCar.boosting = true;
+      } else {
+        botCar.boosting = false;
+      }
+
+      if (dist < 28) {
+        botCar.accel = 1.1;
+      }
+    }
+
+    function updateDrill(dt) {
+      const botCar = carState.blue;
+      const dx = ballState.position.x - botCar.mesh.position.x;
+      const dz = ballState.position.z - botCar.mesh.position.z;
+      const dist = Math.hypot(dx, dz);
+      const targetYaw = Math.atan2(dz, dx);
+      let diff = targetYaw - botCar.mesh.rotation.y;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+
+      botCar.turn = diff * 0.8;
+      botCar.accel = dist > 15 ? 1 : 0.6;
+    }
+
+    function updateGame(dt) {
+      if (world.paused) return;
+
+      // orange controls
+      const orange = carState.orange;
+      orange.accel = 0;
+      orange.turn = 0;
+      orange.boosting = false;
+
+      if (keys['w']) orange.accel = 1;
+      if (keys['s']) orange.accel = -0.7;
+      if (keys['a']) orange.turn = -1;
+      if (keys['d']) orange.turn = 1;
+      if (keys[' ']) orange.boosting = true;
+
+      // other mode logic
+      if (world.mode === 1) {
+        const blue = carState.blue;
+        blue.accel = 0;
+        blue.turn = 0;
+        blue.boosting = false;
+
+        if (keys['arrowup']) blue.accel = 1;
+        if (keys['arrowdown']) blue.accel = -0.7;
+        if (keys['arrowleft']) blue.turn = -1;
+        if (keys['arrowright']) blue.turn = 1;
+        if (keys['shift']) blue.boosting = true;
+      } else if (world.mode === 2) {
+        updateBot(dt);
+      } else if (world.mode === 3) {
+        updateDrill(dt);
+      } else {
+        carState.blue.turn = 0.8 * Math.sin(performance.now() * 0.0015);
+        carState.blue.accel = 0.7;
+        carState.blue.boosting = false;
+      }
+
+      if (keys['r']) {
+        resetRound();
+      }
+
+      updateCar(orange, dt);
+
+      if (world.mode === 1) {
+        updateCar(carState.blue, dt);
+      } else if (world.mode === 2 || world.mode === 3) {
+        // bot uses custom logic and then regular car update
+        const blue = carState.blue;
+        blue.accel = blue.accel || 0;
+        blue.turn = blue.turn || 0;
+        updateCar(blue, dt);
+      } else {
+        const blue = carState.blue;
+        blue.accel = blue.accel || 0;
+        blue.turn = blue.turn || 0;
+        updateCar(blue, dt);
+      }
+
+      updateBall(dt);
+
+      collideCarWithBall(orange);
+      collideCarWithBall(carState.blue);
+
+      // keep camera target and hud updated
+      world.timeRemaining = Math.max(0, world.timeRemaining - dt);
+      updateHUD();
+    }
+
+    function updateHUD() {
+      scoreOrangeEl.textContent = world.scoreOrange;
+      scoreBlueEl.textContent = world.scoreBlue;
+
+      const minutes = Math.floor(world.timeRemaining / 60);
+      const seconds = Math.floor(world.timeRemaining % 60);
+      timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+      boostFillEl.style.width = `${(carState.orange.boost / carState.orange.maxBoost) * 100}%`;
+      speedValueEl.textContent = Math.floor(carState.orange.speed * 0.9);
+    }
+
+    function updateCamera() {
+      const target = orangeCar.position.clone();
+      const behind = new THREE.Vector3(0, 10, -22).applyAxisAngle(new THREE.Vector3(0, 1, 0), orangeCar.rotation.y);
+      const desired = target.clone().add(behind);
+      camera.position.lerp(desired, 0.06);
+      camera.lookAt(target.x, target.y + 4, target.z);
+    }
+
+    function animate() {
+      const dt = Math.min(clock.getDelta(), 0.033);
+      updateModeForKeys();
+      updateGame(dt);
+      updateCamera();
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    // keyboard
+    window.addEventListener('keydown', (event) => {
+      const k = event.key.toLowerCase();
+      if (event.code === 'Space') {
+        keys[' '] = true;
+        event.preventDefault();
+      } else if (k === 'p') {
+        world.paused = !world.paused;
+      } else {
+        keys[k] = true;
+      }
+      if (k === 'r') resetRound();
+    });
+
+    window.addEventListener('keyup', (event) => {
+      const k = event.key.toLowerCase();
+      if (event.code === 'Space') {
+        keys[' '] = false;
+      } else {
+        keys[k] = false;
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    createField();
+    setMode(0);
+    resetRound();
+    animate();
+  </script>
+</body>
+</html>
