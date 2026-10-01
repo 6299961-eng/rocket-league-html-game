@@ -186,29 +186,29 @@
     </div>
   </div>
 
-  <script type="module">
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-    import { OBJLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/OBJLoader.js';
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
 
+  <script>
     const canvas = document.getElementById('gameCanvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setClearColor(0x0b1320);
+    renderer.setClearColor(0x071b2f);
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x0b1320, 80, 420);
+    scene.fog = new THREE.Fog(0x071b2f, 90, 420);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(0, 26, -32);
+    camera.position.set(0, 24, -28);
 
-    const ambient = new THREE.HemisphereLight(0xcfeaff, 0x1b2b40, 1.2);
+    const ambient = new THREE.HemisphereLight(0xcfeaff, 0x182b3a, 1.4);
     scene.add(ambient);
 
-    const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-    sun.position.set(80, 120, 40);
+    const sun = new THREE.DirectionalLight(0xffffff, 1.7);
+    sun.position.set(90, 140, 40);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     sun.shadow.camera.left = -180;
@@ -223,7 +223,6 @@
     const goalHeight = 20;
 
     const world = {
-      radius: 2.8,
       scoreOrange: 0,
       scoreBlue: 0,
       timeRemaining: 300,
@@ -234,7 +233,6 @@
     const keys = {};
     const clock = new THREE.Clock();
 
-    // HUD refs
     const scoreOrangeEl = document.getElementById('scoreOrange');
     const scoreBlueEl = document.getElementById('scoreBlue');
     const timerEl = document.getElementById('timer');
@@ -242,7 +240,6 @@
     const speedValueEl = document.getElementById('speedValue');
     const modePanelEl = document.getElementById('modePanel');
 
-    // audio
     let audioCtx = null;
     function getAudioCtx() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -251,18 +248,20 @@
     }
 
     function playTone(freq, duration, type = 'sine', volume = 0.04) {
-      const ctx = getAudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type;
-      osc.frequency.value = freq;
-      gain.gain.value = volume;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      gain.gain.setValueAtTime(volume, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-      osc.stop(ctx.currentTime + duration);
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.value = volume;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        gain.gain.setValueAtTime(volume, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
     }
 
     function createField() {
@@ -274,24 +273,24 @@
       ground.receiveShadow = true;
       scene.add(ground);
 
-      const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.65 });
-      const centerPoints = [];
-      centerPoints.push(new THREE.Vector3(0, 0.2, -fieldHalfZ));
-      centerPoints.push(new THREE.Vector3(0, 0.2, fieldHalfZ));
+      const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 });
+      const centerPoints = [
+        new THREE.Vector3(0, 0.2, -fieldHalfZ),
+        new THREE.Vector3(0, 0.2, fieldHalfZ)
+      ];
       const centerLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(centerPoints), lineMat);
       scene.add(centerLine);
 
-      const circleGeo = new THREE.BufferGeometry().setFromPoints(
+      const circleGeometry = new THREE.BufferGeometry().setFromPoints(
         Array.from({ length: 64 }, (_, i) => {
           const a = (i / 64) * Math.PI * 2;
           return new THREE.Vector3(Math.cos(a) * 12, 0.2, Math.sin(a) * 12);
         })
       );
-      const circle = new THREE.Line(circleGeo, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.8, transparent: true }));
+      const circle = new THREE.Line(circleGeometry, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.8, transparent: true }));
       scene.add(circle);
 
-      // side walls + goal walls
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x264d3a, roughness: 0.9, metalness: 0.2 });
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x254f3d, roughness: 0.9, metalness: 0.2 });
       const wallGeometry = new THREE.BoxGeometry(8, 12, fieldHalfZ * 2 + 20);
       const leftWall = new THREE.Mesh(wallGeometry, wallMat);
       leftWall.position.set(-fieldHalfX - 4, 6, 0);
@@ -305,15 +304,12 @@
 
       const backWall = new THREE.Mesh(new THREE.BoxGeometry(fieldHalfX * 2 + 30, 12, 8), wallMat);
       backWall.position.set(0, 6, fieldHalfZ + 4);
-      backWall.castShadow = true;
-      backWall.receiveShadow = true;
       scene.add(backWall);
 
       const frontWall = backWall.clone();
       frontWall.position.z = -fieldHalfZ - 4;
       scene.add(frontWall);
 
-      // goal frame wings
       const goalFrameMat = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, metalness: 0.8, roughness: 0.3 });
       const goalPosts = [
         new THREE.Vector3(-fieldHalfX - 8, 6, -goalDepth),
@@ -321,85 +317,51 @@
         new THREE.Vector3(fieldHalfX + 8, 6, -goalDepth),
         new THREE.Vector3(fieldHalfX + 8, 6, goalDepth)
       ];
-      for (const pos of goalPosts) {
+
+      goalPosts.forEach((pos) => {
         const post = new THREE.Mesh(new THREE.BoxGeometry(3, goalHeight, 3), goalFrameMat);
         post.position.copy(pos);
         scene.add(post);
-      }
+      });
 
       const leftGoalBar = new THREE.Mesh(new THREE.BoxGeometry(3, 3, goalDepth * 2), goalFrameMat);
       leftGoalBar.position.set(-fieldHalfX - 8, goalHeight / 2 + 2, 0);
       scene.add(leftGoalBar);
+
       const rightGoalBar = leftGoalBar.clone();
       rightGoalBar.position.x = fieldHalfX + 8;
       scene.add(rightGoalBar);
     }
 
-    const loader = new OBJLoader();
-    let carModel = null;
-    loader.load(
-      './Car.obj',
-      (obj) => {
-        obj.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0xff5a5a,
-              roughness: 0.5,
-              metalness: 0.8,
-              emissive: 0x220800
-            });
-          }
-        });
-        carModel = obj;
-      },
-      undefined,
-      (err) => {
-        console.error('Error cargando Car.obj', err);
-      }
-    );
-
-    function buildCar(color) {
+    function createDefaultCar(color) {
       const group = new THREE.Group();
-      if (carModel) {
-        const clone = carModel.clone();
-        clone.traverse((child) => {
-          if (child.isMesh) {
-            child.material = child.material.clone();
-            child.material.color = new THREE.Color(color);
-          }
-        });
-        group.add(clone);
-      } else {
-        const body = new THREE.Mesh(
-          new THREE.BoxGeometry(3.2, 1.4, 5.4),
-          new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.85 })
-        );
-        body.castShadow = true;
-        body.receiveShadow = true;
-        group.add(body);
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(3.2, 1.4, 5.4),
+        new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.85 })
+      );
+      body.castShadow = true;
+      body.receiveShadow = true;
+      group.add(body);
 
-        const cabin = new THREE.Mesh(
-          new THREE.BoxGeometry(2.2, 1.2, 2.6),
-          new THREE.MeshStandardMaterial({ color: 0x111822, roughness: 0.35, metalness: 0.7 })
-        );
-        cabin.position.y = 1.1;
-        cabin.position.z = -0.1;
-        cabin.castShadow = true;
-        group.add(cabin);
-      }
+      const cabin = new THREE.Mesh(
+        new THREE.BoxGeometry(2.2, 1.2, 2.6),
+        new THREE.MeshStandardMaterial({ color: 0x111822, roughness: 0.35, metalness: 0.7 })
+      );
+      cabin.position.y = 1.1;
+      cabin.position.z = -0.1;
+      cabin.castShadow = true;
+      group.add(cabin);
 
-      // wheels
       const wheelGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.45, 18);
       const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1b1d20, roughness: 0.9, metalness: 0.2 });
-      const wheelOffsets = [
+      const offsets = [
         [-1.4, -0.18, 1.55],
         [1.4, -0.18, 1.55],
         [-1.4, -0.18, -1.55],
         [1.4, -0.18, -1.55]
       ];
-      wheelOffsets.forEach(([x, y, z]) => {
+
+      offsets.forEach(([x, y, z]) => {
         const wheel = new THREE.Mesh(wheelGeo, wheelMat);
         wheel.rotation.z = Math.PI / 2;
         wheel.position.set(x, y, z);
@@ -410,6 +372,43 @@
       group.position.set(0, 2.8, 0);
       group.rotation.y = Math.PI;
       scene.add(group);
+      return group;
+    }
+
+    function loadCarModel(color) {
+      const group = createDefaultCar(color);
+
+      if (window.THREE && window.THREE.OBJLoader) {
+        const loader = new THREE.OBJLoader();
+        loader.load(
+          './Car.obj',
+          function (obj) {
+            obj.traverse(function (child) {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                child.material = new THREE.MeshStandardMaterial({
+                  color,
+                  roughness: 0.45,
+                  metalness: 0.8,
+                  emissive: 0x220800,
+                  emissiveIntensity: 0.15
+                });
+              }
+            });
+            obj.position.set(0, 2.8, 0);
+            obj.rotation.y = Math.PI;
+            scene.remove(group);
+            scene.add(obj);
+            return obj;
+          },
+          undefined,
+          function () {
+            // fallback: keep default car
+          }
+        );
+      }
+
       return group;
     }
 
@@ -430,31 +429,16 @@
       return mesh;
     }
 
-    const orangeCar = buildCar(0xff5d4d);
-    const blueCar = buildCar(0x5bb3ff);
+    const orangeCar = loadCarModel(0xff5d4d);
+    const blueCar = loadCarModel(0x5bb3ff);
     const ballMesh = makeBall();
 
     const carState = {
-      orange: {
-        mesh: orangeCar,
-        velocity: new THREE.Vector3(),
-        yaw: Math.PI,
-        boost: 100,
-        maxBoost: 100,
-        speed: 0
-      },
-      blue: {
-        mesh: blueCar,
-        velocity: new THREE.Vector3(),
-        yaw: 0,
-        boost: 100,
-        maxBoost: 100,
-        speed: 0
-      }
+      orange: { mesh: orangeCar, velocity: new THREE.Vector3(), boost: 100, maxBoost: 100, speed: 0, accel: 0, turn: 0, boosting: false },
+      blue: { mesh: blueCar, velocity: new THREE.Vector3(), boost: 100, maxBoost: 100, speed: 0, accel: 0, turn: 0, boosting: false }
     };
 
     const ballState = {
-      mesh: ballMesh,
       velocity: new THREE.Vector3(0, 0, 0),
       position: new THREE.Vector3(0, 3.5, 0)
     };
@@ -503,32 +487,23 @@
       const forward = new THREE.Vector3(Math.sin(steering), 0, Math.cos(steering));
       const lateral = new THREE.Vector3(forward.z, 0, -forward.x);
 
-      const accelInput = new THREE.Vector3();
-      const turnInput = new THREE.Vector3();
-
       if (car.accel) {
-        accelInput.copy(forward).multiplyScalar(car.accel);
+        car.velocity.addScaledVector(forward, car.accel * 18 * dt);
       }
       if (car.turn) {
-        turnInput.copy(lateral).multiplyScalar(car.turn * 0.7);
+        car.mesh.rotation.y += car.turn * 1.6 * dt;
       }
 
-      car.velocity.addScaledVector(accelInput, 18 * dt);
-      car.mesh.rotation.y += car.turn * 1.6 * dt;
-
-      if (car.boosting) {
-        if (car.boost > 0) {
-          car.mesh.position.addScaledVector(forward, 34 * dt);
-          car.boost = Math.max(0, car.boost - 40 * dt);
-          playTone(190, 0.05, 'sawtooth', 0.015);
-        }
+      if (car.boosting && car.boost > 0) {
+        car.mesh.position.addScaledVector(forward, 34 * dt);
+        car.boost = Math.max(0, car.boost - 40 * dt);
+        playTone(190, 0.05, 'sawtooth', 0.015);
       }
 
       car.mesh.position.addScaledVector(car.velocity, dt);
       car.speed = car.velocity.length();
       car.velocity.multiplyScalar(0.985);
 
-      // clamp to field
       const x = THREE.MathUtils.clamp(car.mesh.position.x, -fieldHalfX + 8, fieldHalfX - 8);
       const z = THREE.MathUtils.clamp(car.mesh.position.z, -fieldHalfZ + 8, fieldHalfZ - 8);
       car.mesh.position.set(x, 2.8, z);
@@ -609,7 +584,7 @@
       }
     }
 
-    function updateBot(dt) {
+    function updateBot() {
       const botCar = carState.blue;
       const orange = carState.orange;
       const dx = orange.mesh.position.x - botCar.mesh.position.x;
@@ -623,25 +598,19 @@
 
       botCar.turn = diff * 0.6;
       botCar.accel = dist > 20 ? 1 : 0.5;
+      botCar.boosting = dist < 18 && Math.random() < 0.03;
 
-      if (dist < 18 && Math.random() < 0.03) {
-        botCar.boosting = true;
-      } else {
-        botCar.boosting = false;
-      }
-
-      if (dist < 28) {
-        botCar.accel = 1.1;
-      }
+      if (dist < 28) botCar.accel = 1.1;
     }
 
-    function updateDrill(dt) {
+    function updateDrill() {
       const botCar = carState.blue;
       const dx = ballState.position.x - botCar.mesh.position.x;
       const dz = ballState.position.z - botCar.mesh.position.z;
       const dist = Math.hypot(dx, dz);
       const targetYaw = Math.atan2(dz, dx);
       let diff = targetYaw - botCar.mesh.rotation.y;
+
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
 
@@ -652,7 +621,6 @@
     function updateGame(dt) {
       if (world.paused) return;
 
-      // orange controls
       const orange = carState.orange;
       orange.accel = 0;
       orange.turn = 0;
@@ -664,7 +632,6 @@
       if (keys['d']) orange.turn = 1;
       if (keys[' ']) orange.boosting = true;
 
-      // other mode logic
       if (world.mode === 1) {
         const blue = carState.blue;
         blue.accel = 0;
@@ -677,42 +644,29 @@
         if (keys['arrowright']) blue.turn = 1;
         if (keys['shift']) blue.boosting = true;
       } else if (world.mode === 2) {
-        updateBot(dt);
+        updateBot();
       } else if (world.mode === 3) {
-        updateDrill(dt);
+        updateDrill();
       } else {
         carState.blue.turn = 0.8 * Math.sin(performance.now() * 0.0015);
         carState.blue.accel = 0.7;
         carState.blue.boosting = false;
       }
 
-      if (keys['r']) {
-        resetRound();
-      }
+      if (keys['r']) resetRound();
 
       updateCar(orange, dt);
 
       if (world.mode === 1) {
         updateCar(carState.blue, dt);
-      } else if (world.mode === 2 || world.mode === 3) {
-        // bot uses custom logic and then regular car update
-        const blue = carState.blue;
-        blue.accel = blue.accel || 0;
-        blue.turn = blue.turn || 0;
-        updateCar(blue, dt);
       } else {
-        const blue = carState.blue;
-        blue.accel = blue.accel || 0;
-        blue.turn = blue.turn || 0;
-        updateCar(blue, dt);
+        updateCar(carState.blue, dt);
       }
 
       updateBall(dt);
-
       collideCarWithBall(orange);
       collideCarWithBall(carState.blue);
 
-      // keep camera target and hud updated
       world.timeRemaining = Math.max(0, world.timeRemaining - dt);
       updateHUD();
     }
@@ -746,8 +700,7 @@
       requestAnimationFrame(animate);
     }
 
-    // keyboard
-    window.addEventListener('keydown', (event) => {
+    window.addEventListener('keydown', function (event) {
       const k = event.key.toLowerCase();
       if (event.code === 'Space') {
         keys[' '] = true;
@@ -760,7 +713,7 @@
       if (k === 'r') resetRound();
     });
 
-    window.addEventListener('keyup', (event) => {
+    window.addEventListener('keyup', function (event) {
       const k = event.key.toLowerCase();
       if (event.code === 'Space') {
         keys[' '] = false;
@@ -769,7 +722,7 @@
       }
     });
 
-    window.addEventListener('resize', () => {
+    window.addEventListener('resize', function () {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
